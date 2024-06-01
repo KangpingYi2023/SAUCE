@@ -34,6 +34,10 @@ args_combination:
   ]  
   # query_seed: [6,7] 
   "query_seed": [5]
+  "num_queries": [
+    100,
+    1000,
+  ]
 
 params_combination:
   data_updater.skew_ratio: [

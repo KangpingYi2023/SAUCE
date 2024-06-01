@@ -18,3 +18,4 @@ models/*
 take-over.md
 !end2end/**/tmp
 !models/**origin_models
+!models/end2end
