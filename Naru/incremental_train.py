@@ -829,7 +829,7 @@ def AdaptTask(
                 print("time since start: {:.1f} secs".format(since_start))
 
                 check_point_path = (
-                    "./Naru/checkpoints/update_batch_{}_epoch_{}.pt".format(
+                    "./models/checkpoints/update_batch_{}_epoch_{}.pt".format(
                         update_step + 1, epoch
                     )
                 )
@@ -1075,7 +1075,7 @@ def UpdateTask(
                 print("time since start: {:.1f} secs".format(since_start))
 
                 check_point_path = (
-                    "./Naru/checkpoints/update_batch_{}_epoch_{}.pt".format(
+                    "./models/checkpoints/update_batch_{}_epoch_{}.pt".format(
                         update_step + 1, epoch
                     )
                 )
