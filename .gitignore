@@ -12,9 +12,9 @@ end2end/end2end-bootstrap/*.csv
 end2end/end2end-evaluations/*.txt
 end2end/experiment-records/*.txt
 end2end/figures/
-end2end/model-evaluation/** 
-end2end/parsed-records/*.txt
-models/
+end2end/model-evaluation/*
+end2end/parsed-records/*
+models/*
 take-over.md
 !end2end/**/tmp
-# !models/**origin_models
+!models/**origin_models
