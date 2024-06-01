@@ -14,3 +14,6 @@ end2end/experiment-records/**
 end2end/figures/
 end2end/model-evaluation/** 
 end2end/parsed-records/**
+models/**
+!models/*origin_models
+take-over.md
