@@ -1531,29 +1531,9 @@ def test_for_drift(
         return table, raw_data.astype(np.float32), sampled_data.astype(np.float32)
 
     def kl_divergence(mu1, sigma1, mu2, sigma2):
-        """
-        计算两个高斯分布之间的KL散度。
-        
-        参数：
-            mu1: 第一个高斯分布的均值。
-            sigma1: 第一个高斯分布的标准差。
-            mu2: 第二个高斯分布的均值。
-            sigma2: 第二个高斯分布的标准差。
-        
-        返回值：
-            KL散度的值。
-        """
         kl = np.log(sigma2 / sigma1) + (sigma1**2 + (mu1 - mu2)**2) / (2 * sigma2**2) - 0.5
         print(kl)
         return kl
-
-    def js_divergence(mu1, sigma1, mu2, sigma2):
-        mu_tmp=(mu1+mu2)/2
-        sigma_tmp=(np.sqrt(sigma1**2+sigma2**2))/2
-
-        js=(kl_divergence(mu1, sigma1, mu_tmp, sigma_tmp)+kl_divergence(mu2, sigma2, mu_tmp, sigma_tmp))/2
-        print(js)
-        return np.mean(js)
 
     def distribution_test(raw_data, sampled_data, sample_size, threshold=1):
         # old_sample = table_sample.sampling(raw_data, sample_size, replace=False)
@@ -1567,22 +1547,14 @@ def test_for_drift(
         kl_score=kl_divergence(old_mean, old_std, new_mean, new_std)
         kl_score=np.mean(kl_score)
         print(f"Distance score: {kl_score}")
-        # js_score=js_divergence(old_mean, old_std, new_mean, new_std)
-        # print(f"Distance score: {js_score}")
-        # stat = np.abs(old_mean - new_mean)
-        # print(old_mean.shape)
-        # flag = sum(1 for i in range(old_mean.shape[0]) if stat[i] > threshold[i])
 
-        # print("Test statistic: {}".format(stat))
-        # print("Threshold:{}".format(threshold))
         return kl_score > threshold
 
-    # 更新数据
+    # update data
     table, raw_data, sampled_data = data_update()
     print(f"Data updated!")
 
     def drift_detect(table, raw_data, sampled_data, sample_size) -> bool:
-        # 漂移检测 - DDUp
         if not end2end or args.drift_test == "ddup":
             table_bits = Entropy(
                 table,
@@ -1670,34 +1642,29 @@ def test_for_drift(
 
             return drift
 
-        # 漂移检测 - JS test
-        if args.drift_test == "js":
+        # drift detection - sauce
+        if args.drift_test == "sauce":
             thres = 0
             if args.dataset == "census":
-                thres=1e-4
+                thres=6.26e-6
             elif args.dataset == "bjaq":
-                thres=1e-5
+                thres=2.78e-5
             elif args.dataset == "forest":
-                thres=1e-6
+                thres=1.73e-6
             elif args.dataset == "power":
-                thres=1.7e-5
-            
-            # return table_sample.JS_test(
-            #     data=raw_data,
-            #     update_data=sampled_data,
-            #     sample_size=int(0.05*args.update_size),  # TODO: 该值待定
-            #     threshold=thres,  # TODO: 该值待定
-            #     epoch=50
-            # )
+                thres=8.03e-6
+        
 
             return distribution_test(
                 raw_data=raw_data,
                 sampled_data=sampled_data,
-                sample_size=5000,  # TODO: 该值待定
+                sample_size=5000, 
                 threshold=thres
             )
 
-    # 将新数据更新到unlearned data pool
+        if args.drift_test == "none":
+            return False
+
     pool_path=f"./data/{args.dataset}/end2end/{args.dataset}_pool.npy"
     if os.path.isfile(pool_path):
         unlearned_data=np.load(pool_path).astype(np.float32)
@@ -1710,12 +1677,18 @@ def test_for_drift(
     np.save(pool_path, new_data)
 
     detection_start=time.time()
-    # 漂移检测
+   
     print(f"Previous data size: {previous_data.shape}, new data size: {new_data.shape}")
     is_drift: bool = drift_detect(table, previous_data, new_data, sample_size)
     detection_finish=time.time()
     time_overhead=detection_finish-detection_start
-    detection_type="DDUp" if args.drift_test=="ddup" else "SAUCE"
+    
+    if args.drift_test=="ddup":
+        detection_type="DDUp"
+    elif args.drift_test=="sauce":
+        detection_type="SAUCE"
+    else:
+        detection_type="None"
     print(f"{detection_type} Drift detection: {is_drift}")
     print("Detection latency: {:.4f}s".format(time_overhead))
     communicator.DriftCommunicator().set(is_drift=is_drift)  # 将结果写入txt文件

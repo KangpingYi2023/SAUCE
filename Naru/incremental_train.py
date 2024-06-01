@@ -1605,7 +1605,6 @@ def BayesCardExp(pre_model=None, seed=0):
 
 def main():
     if not args.end2end:
-        # 原逻辑：用3种增量训练方法，训练所有模型
         relative_model_paths = (
             "./models/origin-{}*MB-model*-data*-*epochs-seed*.pt".format(args.dataset)
         )
@@ -1619,16 +1618,15 @@ def main():
     else:
         # end2end实验：用1种增量训练方法，训练1个模型
         model_path = communicator.ModelPathCommunicator().get()
-        new_model_path = model_path  # 保存在原模型的路径下  TODO: 保存在新模型的路径下
+        new_model_path = model_path  
 
-        # 获取更新数据池并判断其尺寸
         pool_path=f"./data/{args.dataset}/end2end/{args.dataset}_pool.npy"
         unlearned_data=np.load(pool_path)
         update_size=unlearned_data.shape[0]
         args.update_size=update_size
         print(f"update_size: {update_size}")
 
-        # 学习之后删除文件
+        # clear pool after model update
         os.remove(pool_path)
 
         if args.model_update == "update":
@@ -1639,7 +1637,6 @@ def main():
             print("UpdateTask - END")
         elif args.model_update == "adapt":
             print("AdaptTask - START")
-            # AdaptTask(pre_model=model_path, new_model_path=new_model_path, end2end=True)
             AdaptTask(
                 pre_model=model_path,
                 new_model_path=new_model_path,
@@ -1653,24 +1650,11 @@ def main():
                 pre_model=model_path, new_model_path=new_model_path, end2end=True
             )
             print("FineTuneTask - END")
+        elif args.model_update == "none":
+            print("No model update-CONTINUE")
         else:
             raise ValueError("model update method not supported")
 
-    # TrainTask()
-    # BayesCardExp(pre_model="models/00tpcds-12.9MB-model10.410-data13.514-made-resmade-hidden128_128_128_128-emb32-directIo-binaryInone_hotOut-inputNoEmbIfLeq-colmask-10epochs-seed0.pt")
-    # UpdateTask(
-    #     pre_model="./models/census-38.5MB-model30.303-data15.573-made-resmade-hidden256_256_256_256_256-emb32-directIo-binaryInone_hotOut-inputNoEmbIfLeq-colmask-20epochs-seed0.pt"
-    # )
-
-    # if args.dataset=="census":
-    #     pre_model="./models/origin-census-22.5MB-model26.797-data14.989-200epochs-seed0.pt"
-    #     UpdateTask(pre_model=pre_model)
-    #     FineTuneTask(pre_model=pre_model)
-    # elif args.dataset=="forest":
-    #     forest_path="./models/origin-forest-16.5MB-model62.991-data19.148-100epochs-seed0.pt"
-    #     UpdateTask(pre_model=forest_path)
-    #     FineTuneTask(pre_model=forest_path)
-    # DistillTask(pre_model='models/00forest-23.7MB-model59.664-data19.148-made-resmade-hidden256_256_256_256_256-emb32-directIo-binaryInone_hotOut-inputNoEmbIfLeq-colmask-20epochs-seed0.pt')
 
 
 if __name__ == "__main__":

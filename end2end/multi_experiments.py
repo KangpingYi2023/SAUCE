@@ -40,7 +40,9 @@ def run_multi_experiments(
         if arg_dict["model_update"] == "update":
             arg_dict["drift_test"] = "ddup"
         elif arg_dict["model_update"] == "adapt":
-            arg_dict["drift_test"] = "js"
+            arg_dict["drift_test"] = "sauce"
+        elif arg_dict["model_update"] == "none":
+            arg_dict["drift_test"] = "none"
 
         if arg_dict["dataset"] == "census":
             arg_dict["update_size"] = 4000 #small batch for e2e
@@ -77,10 +79,10 @@ def run_multi_experiments(
 
 if __name__ == "__main__":
     # self-defined parameters
-    # args_yaml_path = path_util.get_absolute_path("./end2end/configs/args.yaml")
-    
+    args_yaml_path = path_util.get_absolute_path("./end2end/configs/args.yaml")
+
     # e2e parameters for each dataset
-    args_yaml_path = path_util.get_absolute_path("./end2end/configs/e2e-bjaq+naru.yaml")
+    # args_yaml_path = path_util.get_absolute_path("./end2end/configs/e2e-bjaq+naru.yaml")
     # args_yaml_path = path_util.get_absolute_path("./end2end/configs/e2e-bjaq+transformer.yaml")
     # args_yaml_path = path_util.get_absolute_path("./end2end/configs/e2e-census+naru.yaml")
     # args_yaml_path = path_util.get_absolute_path("./end2end/configs/e2e-census+transformer.yaml")

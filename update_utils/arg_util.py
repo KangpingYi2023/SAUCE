@@ -50,8 +50,8 @@ def add_common_arguments(parser: argparse.ArgumentParser, arg_types: List[ArgTyp
             parser.add_argument(
                 "--drift_test",
                 type=str,
-                choices=["js", "ddup"],
-                help="js (JS-divergence), ddup",
+                choices=["sauce", "ddup", "none"],
+                help="sauce, ddup, none",
             )
         if arg_type == ArgType.END2END:
             parser.add_argument(
@@ -77,8 +77,8 @@ def add_common_arguments(parser: argparse.ArgumentParser, arg_types: List[ArgTyp
             parser.add_argument(
                 "--model_update",
                 type=str,
-                choices=["update", "adapt", "finetune"],
-                help="update (drift_test=ddup), adapt (drift_test=js), finetune (baseline)",
+                choices=["update", "adapt", "finetune", "none"],
+                help="update (drift_test=ddup), adapt (drift_test=sauce), finetune (baseline), none (no updates)",
             )
             parser.add_argument(
                 "--model",
