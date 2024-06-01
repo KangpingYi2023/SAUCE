@@ -1,0 +1,418 @@
+Input arguments = Namespace(data_update='tupleskew', update_size=20000, dataset='bjaq', debug=False, drift_test='ddup', model_update='update', model='naru', end2end=False, query_seed=0, random_seed=42, num_workload=15)
+JSON-passed parameters = {'data_updater': {'skew_ratio': '1e-3'}, 'random_seed': 1226, 'naru': {'epochs': 40}}
+MODEL-PATH=/home/kangping/code_copy/SAUCE/models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+DATASET-PATH=/home/kangping/code_copy/SAUCE/data/bjaq/end2end/bjaq.npy
+Workloads: ['QueryWorkload', 'DataUpdateWorkload', 'QueryWorkload', 'DataUpdateWorkload', 'QueryWorkload', 'DataUpdateWorkload', 'QueryWorkload', 'DataUpdateWorkload', 'QueryWorkload', 'DataUpdateWorkload', 'QueryWorkload', 'DataUpdateWorkload', 'QueryWorkload', 'DataUpdateWorkload', 'QueryWorkload']
+
+WORKLOAD-START | Type: QueryWorkload | Progress: 1/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--dataset=bjaq', '--model=naru', '--query_seed=0', '--end2end', '--eval_type=first_estimate', '--num_workload=15', '--data_update=tupleskew', '--model_update=update', '--random_seed=42']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+ckpts [PosixPath('/home/kangping/code_copy/SAUCE/models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt')]
+Validate Argument: DATASET="bjaq" is valid.
+load_npy_dataset_from_path - df.shape = (382168, 5)
+Parsing... done, took 0.0s
+Loading ckpt: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+query_seed:0
+origin-bjaq_15.87 	max: 3.0000	99th: 2.6700	95th: 1.4300	median: 1.0640	mean: 1.1541
+ReportEsts: [1.1623616236162362, 1.0463215258855585, 1.0341329862435762, 1.0115384615384615, 1.0344827586206897, 1.0, 1.1501182033096926, 1.0266164757729475, 1.25, 1.0400534045393859, 1.035841052722708, 1.002466043149254, 1.024526678141136, 1.0232558139534884, 1.0042387848816672, 1.0, 1.1111111111111112, 1.057031526744598, 3.0, 2.6666666666666665, 1.173913043478261, 1.1676083674789735, 1.028078492705457, 1.0730938878386893, 1.0542673902318698, 1.0, 1.042913424282877, 1.0, 1.4, 1.1798561151079137, 1.0, 1.0039446814447766, 1.0102541705624724, 1.36015538290788, 1.0551681388501473, 1.0265723376887144, 1.0655270655270654, 1.0106597382415075, 1.0840278256078242, 1.1547619047619047, 1.2074303405572755, 1.1798780487804879, 1.0, 1.1199463438981783, 1.0933209933672683, 1.2148760330578512, 1.1067961165048543, 1.1841004184100419, 1.0431511264929425, 1.0909090909090908, 1.0748355857483558, 1.159362549800797, 1.0041788204141584, 2.0, 1.1428571428571428, 1.1203831225741832, 1.1512727272727272, 1.064638783269962, 1.2732919254658386, 1.25, 1.0057251908396947, 1.037359900373599, 1.0318181818181817, 1.1379310344827587, 1.1, 1.0633069121871863, 1.0366225839267549, 1.1666666666666667, 1.0, 1.0694915254237287, 1.029832935560859, 1.059061957151129, 1.1058558558558558, 1.155793525463877, 1.1788235294117646, 1.139240506329114, 1.0, 1.0444832097688617, 2.0, 1.0202875261843956, 1.0, 1.030232983195536, 1.2515337423312884, 1.003440366972477, 1.0748945147679325, 1.04, 1.0002891635943034, 1.0153061224489797, 1.1274509803921569, 2.3333333333333335, 1.1419847328244275, 1.002764527001194, 1.0490196078431373, 1.2720897615708275, 1.2600690448791714, 1.1, 1.2053571428571428, 1.0464285714285715, 1.0, 1.0158629441624365]
+origin-bjaq_15.87 	max: 3.0000	99th: 2.6700	95th: 1.4300	median: 1.0640	mean: 1.1541
+
+...Done, result: results.csv
+
+WORKLOAD-FINISHED | Type: QueryWorkload | Progress: 1/15 | Workload-time: 3.144403 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: DataUpdateWorkload | Progress: 2/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--model=naru', '--data_update=tupleskew', '--dataset=bjaq', '--drift_test=ddup', '--end2end', '--update_size=20000', '--query_seed=0', '--eval_type=drift']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+GET-DATASET-PATH=./data/bjaq/end2end/bjaq.npy
+TupleSkewSample - START
+0.001
+TupleSkewSample - END
+load_npy_dataset_from_path - df.shape = (402168, 5)
+Parsing... done, took 0.0s
+Data updated!
+Previous data size: (382168, 5), new data size: (20000, 5)
+done, took 0.0s
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+done, took 0.0s
+new data average log likelihood = 23.9845
+detection mean = 23.8579
+detection threshold = 0.2462
+test statistic = 0.1266
+Offline time = 2.1405880451202393
+Online time = 0.07097935676574707
+Test result: False
+DDUp Drift detection: False
+Detection latency: 3.0227s
+
+WORKLOAD-FINISHED | Type: DataUpdateWorkload | Progress: 2/15 | Workload-time: 5.287834 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: QueryWorkload | Progress: 3/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--dataset=bjaq', '--model=naru', '--end2end', '--query_seed=0', '--eval_type=estimate', '--num_workload=15', '--data_update=tupleskew', '--model_update=update', '--random_seed=42']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+ckpts [PosixPath('/home/kangping/code_copy/SAUCE/models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt')]
+Validate Argument: DATASET="bjaq" is valid.
+data size: 402168, total size: 402168, split index: [335140 402168]
+Parsing... done, took 0.0s
+Loading ckpt: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+query_seed:0
+origin-bjaq_15.87 	max: 62.0000	99th: 48.1400	95th: 2.3494	median: 1.0487	mean: 2.2506
+ReportEsts: [1.0862068965517242, 1.0473616473616474, 1.0458009230636511, 1.0576923076923077, 1.0, 1.0, 1.1163945278022949, 1.0395987584824522, 1.25, 1.024390243902439, 1.0216900387521257, 1.0045064342324233, 1.044229149115417, 1.0604651162790697, 1.0163826998689385, 1.0, 1.6981132075471699, 1.0087378640776699, 3.0, 2.6666666666666665, 2.6551724137931036, 1.0846317861243235, 1.0077675553466299, 1.062575210589651, 1.0410826486225229, 1.0, 1.0326722526975707, 1.2, 1.4, 1.2589928057553956, 1.0, 1.0097212518370395, 1.0099005268975034, 1.351224596143825, 1.0482142857142858, 1.0159268261481387, 1.2335958005249343, 62.0, 1.0491551459293396, 1.0353982300884956, 1.0138134266507044, 1.0449084720816852, 1.0061696780887532, 1.028688524590164, 1.142212189616253, 1.2777777777777777, 1.054054054054054, 1.6124031007751938, 1.0682565789473684, 1.2924528301886793, 1.0561143462149285, 1.006482982171799, 1.0057720057720059, 1.0245590345176807, 1.9541984732824427, 1.04751920324187, 1.0196132980943107, 1.00657746145244, 1.1567164179104477, 1.0021069499673572, 1.1851851851851851, 1.0118133780379008, 1.1318493150684932, 1.1363636363636365, 1.206896551724138, 1.0, 1.1325336838646074, 1.0470706059088633, 1.1666666666666667, 1.0, 1.0416858802914322, 1.0212053571428572, 1.1170973062122045, 1.0564516129032258, 1.1092935145977267, 1.135306553911205, 1.0505836575875487, 1.0, 1.0178201409034398, 1.452054794520548, 1.0005660045433338, 1.4285714285714286, 1.053891282903276, 1.3006134969325154, 1.0125, 1.0436507936507937, 1.12, 1.0021290039790742, 1.039350050523235, 1.2598039215686274, 2.3333333333333335, 1.1327561327561328, 1.0085706603329674, 1.0467289719626167, 1.399719495091164, 1.1799568965517242, 1.023936170212766, 48.0, 1.145679012345679, 1.0]
+origin-bjaq_15.87 	max: 62.0000	99th: 48.1400	95th: 2.3494	median: 1.0487	mean: 2.2506
+
+...Done, result: results.csv
+
+WORKLOAD-FINISHED | Type: QueryWorkload | Progress: 3/15 | Workload-time: 3.134548 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: DataUpdateWorkload | Progress: 4/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--model=naru', '--data_update=tupleskew', '--dataset=bjaq', '--drift_test=ddup', '--end2end', '--update_size=20000', '--query_seed=0', '--eval_type=drift']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+GET-DATASET-PATH=./data/bjaq/end2end/bjaq.npy
+TupleSkewSample - START
+0.001
+TupleSkewSample - END
+load_npy_dataset_from_path - df.shape = (422168, 5)
+Parsing... done, took 0.0s
+Data updated!
+Previous data size: (382168, 5), new data size: (40000, 5)
+done, took 0.0s
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+done, took 0.0s
+new data average log likelihood = 23.7832
+detection mean = 23.8596
+detection threshold = 0.2364
+test statistic = 0.0764
+Offline time = 2.1493520736694336
+Online time = 0.07498836517333984
+Test result: False
+DDUp Drift detection: False
+Detection latency: 3.0621s
+
+WORKLOAD-FINISHED | Type: DataUpdateWorkload | Progress: 4/15 | Workload-time: 5.255657 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: QueryWorkload | Progress: 5/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--dataset=bjaq', '--model=naru', '--end2end', '--query_seed=0', '--eval_type=estimate', '--num_workload=15', '--data_update=tupleskew', '--model_update=update', '--random_seed=42']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+ckpts [PosixPath('/home/kangping/code_copy/SAUCE/models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt')]
+Validate Argument: DATASET="bjaq" is valid.
+data size: 422168, total size: 422168, split index: [351806 422168]
+Parsing... done, took 0.0s
+Loading ckpt: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+query_seed:0
+origin-bjaq_15.87 	max: 62.0000	99th: 48.1400	95th: 2.1237	median: 1.0740	mean: 2.5913
+ReportEsts: [1.0096153846153846, 1.052, 1.0378828256324053, 1.0784313725490196, 1.1, 1.0, 1.1949046754425783, 1.019862022464519, 1.25, 1.0641848523748396, 1.0930796931266635, 1.0037590890382768, 1.0245836637589214, 1.0611814345991561, 1.0284982388728787, 1.2546957175056348, 1.2230769230769232, 10.5, 1.5, 1.1498015873015872, 1.0341431385423505, 1.010597302504817, 1.160414788097385, 1.25, 1.0182280159080865, 1.0130653019044338, 2.0, 1.0677049277774475, 2.0, 1.6, 1.2877697841726619, 1.0, 1.0044800097690163, 1.0052500444919026, 1.2607833415964302, 1.0119577308120133, 1.009503856197243, 1.3946078431372548, 62.0, 1.0464949928469243, 1.0544959128065394, 1.06528252776853, 1.010487435450012, 1.0002958819304653, 1.0321361058601135, 1.1370740048514734, 1.2777777777777777, 1.1081081081081081, 1.0432692307692308, 1.018896447467876, 1.3584905660377358, 1.0974782289258163, 1.0595813204508857, 1.0222531293463144, 1.0194135653294667, 1.4809160305343512, 1.0442144507660343, 1.0452005670919857, 1.001659486030478, 1.2164179104477613, 1.0169392189376179, 1.1851851851851851, 1.0415758171814546, 1.1797945205479452, 1.1181818181818182, 1.2758620689655173, 28.0, 1.0367101680593371, 1.0047032474804032, 1.1666666666666667, 1.0, 1.0942427576090943, 1.0714285714285714, 1.1494736842105264, 1.0766129032258065, 1.0991267108909228, 1.2029598308668077, 1.0325047801147227, 1.0, 1.0106973058637083, 2.112676056338028, 1.012490374933365, 1.2857142857142858, 1.0896688189960424, 1.2760736196319018, 1.0552083333333333, 1.049689440993789, 1.16, 1.001688128990369, 1.082631189948263, 1.2401960784313726, 2.3333333333333335, 1.0259795570698467, 1.0017601287899114, 1.1339563862928348, 1.2982885085574571, 1.1666666666666667, 1.0285714285714285, 48.0, 1.0957683741648108]
+origin-bjaq_15.87 	max: 62.0000	99th: 48.1400	95th: 2.1237	median: 1.0740	mean: 2.5913
+
+...Done, result: results.csv
+
+WORKLOAD-FINISHED | Type: QueryWorkload | Progress: 5/15 | Workload-time: 3.115184 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: DataUpdateWorkload | Progress: 6/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--model=naru', '--data_update=tupleskew', '--dataset=bjaq', '--drift_test=ddup', '--end2end', '--update_size=20000', '--query_seed=0', '--eval_type=drift']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+GET-DATASET-PATH=./data/bjaq/end2end/bjaq.npy
+TupleSkewSample - START
+0.001
+TupleSkewSample - END
+load_npy_dataset_from_path - df.shape = (442168, 5)
+Parsing... done, took 0.0s
+Data updated!
+Previous data size: (382168, 5), new data size: (60000, 5)
+done, took 0.0s
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+done, took 0.0s
+new data average log likelihood = 23.8033
+detection mean = 23.8617
+detection threshold = 0.2462
+test statistic = 0.0584
+Offline time = 2.124129056930542
+Online time = 0.07999491691589355
+Test result: False
+DDUp Drift detection: False
+Detection latency: 3.0290s
+
+WORKLOAD-FINISHED | Type: DataUpdateWorkload | Progress: 6/15 | Workload-time: 5.196248 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: QueryWorkload | Progress: 7/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--dataset=bjaq', '--model=naru', '--end2end', '--query_seed=0', '--eval_type=estimate', '--num_workload=15', '--data_update=tupleskew', '--model_update=update', '--random_seed=42']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+ckpts [PosixPath('/home/kangping/code_copy/SAUCE/models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt')]
+Validate Argument: DATASET="bjaq" is valid.
+data size: 442168, total size: 442168, split index: [368473 442168]
+Parsing... done, took 0.0s
+Loading ckpt: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+query_seed:0
+origin-bjaq_15.87 	max: 62.0000	99th: 28.3400	95th: 3.4725	median: 1.0827	mean: 2.3568
+ReportEsts: [1.1630094043887147, 1.0332778702163061, 1.0393071766070527, 1.0766488413547237, 1.1, 1.0, 1.1320647689768977, 1.0143610614087406, 1.25, 1.116816431322208, 1.0243718970964344, 1.0073063772577304, 1.1142857142857143, 1.0949367088607596, 1.0002893518518519, 1.2682926829268293, 1.2615384615384615, 10.5, 1.5, 1.1463897131552918, 1.0609970069150583, 1.0169996260266951, 1.0607734806629834, 1.0243445692883895, 1.017724931223574, 1.0244891055675402, 2.0, 1.05110727720112, 1.0, 1.6, 1.39568345323741, 1.0, 1.003229781060214, 1.0078043290135221, 1.358288770053476, 1.0839968152866242, 1.0058023209283713, 1.296127562642369, 62.0, 1.037164487267722, 1.0605263157894738, 1.0021073950407795, 1.0286260099187894, 1.0015174946839358, 1.0164835164835164, 1.0443220101066817, 1.3888888888888888, 1.162162162162162, 1.3333333333333333, 1.0614173228346457, 1.4339622641509433, 1.0076679276147633, 1.0813204508856682, 1.0384615384615385, 1.0103100598893184, 1.2033898305084745, 1.0511887072808321, 1.0211272467837333, 1.2975778546712802, 1.0256410256410255, 1.0233897593987706, 1.2777777777777777, 1.0179801348510114, 1.141287284144427, 1.190909090909091, 1.2873563218390804, 28.0, 1.0525301486261571, 1.014288807101104, 1.1666666666666667, 1.0, 1.0872822299651568, 1.0508474576271187, 1.2174786539427422, 1.057591623036649, 1.1629577053150182, 1.0848214285714286, 1.0919448803663176, 1.315217391304348, 1.3161764705882353, 1.010504747337739, 1.2412607449856734, 3.076923076923077, 1.0, 9.6, 1.045219638242894, 1.1176470588235294, 1.1547619047619047, 1.2, 14.5, 1.0325846520333504, 1.0798781519715688, 1.0654342584274976, 1.004576235319014, 1.141750580945004, 1.0404984423676011, 1.0841584158415842, 1.2131147540983607, 1.2119883040935673, 3.15]
+origin-bjaq_15.87 	max: 62.0000	99th: 28.3400	95th: 3.4725	median: 1.0827	mean: 2.3568
+
+...Done, result: results.csv
+
+WORKLOAD-FINISHED | Type: QueryWorkload | Progress: 7/15 | Workload-time: 3.085724 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: DataUpdateWorkload | Progress: 8/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--model=naru', '--data_update=tupleskew', '--dataset=bjaq', '--drift_test=ddup', '--end2end', '--update_size=20000', '--query_seed=0', '--eval_type=drift']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+GET-DATASET-PATH=./data/bjaq/end2end/bjaq.npy
+TupleSkewSample - START
+0.001
+TupleSkewSample - END
+load_npy_dataset_from_path - df.shape = (462168, 5)
+Parsing... done, took 0.0s
+Data updated!
+Previous data size: (382168, 5), new data size: (80000, 5)
+done, took 0.0s
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+done, took 0.0s
+new data average log likelihood = 23.8733
+detection mean = 23.8591
+detection threshold = 0.2406
+test statistic = 0.0142
+Offline time = 2.1588401794433594
+Online time = 0.08244657516479492
+Test result: False
+DDUp Drift detection: False
+Detection latency: 3.0316s
+
+WORKLOAD-FINISHED | Type: DataUpdateWorkload | Progress: 8/15 | Workload-time: 5.218468 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: QueryWorkload | Progress: 9/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--dataset=bjaq', '--model=naru', '--end2end', '--query_seed=0', '--eval_type=estimate', '--num_workload=15', '--data_update=tupleskew', '--model_update=update', '--random_seed=42']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+ckpts [PosixPath('/home/kangping/code_copy/SAUCE/models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt')]
+Validate Argument: DATASET="bjaq" is valid.
+data size: 462168, total size: 462168, split index: [385140 462168]
+Parsing... done, took 0.0s
+Loading ckpt: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+query_seed:0
+origin-bjaq_15.87 	max: 62.0000	99th: 36.2600	95th: 9.0300	median: 1.1000	mean: 2.7424
+ReportEsts: [1.1616438356164382, 1.0276643990929706, 1.0308983869361745, 1.1105169340463459, 1.1333333333333333, 1.0, 1.1636177823198774, 1.0145931793227796, 1.0, 1.1694480102695763, 1.0767318285964997, 1.007373252077086, 1.0214110214110215, 1.1265822784810127, 1.0668587896253603, 1.3198352779684284, 1.3115384615384615, 9.0, 1.3333333333333333, 1.159, 1.0386042314248471, 1.0030626603757966, 1.5675675675675675, 1.046617915904936, 1.0103977583138009, 1.0191403740150824, 2.0, 1.0268975193921583, 1.0, 1.6, 1.0338345864661653, 1.0, 1.0087732211706975, 1.0001421973038376, 1.253968253968254, 1.1053503184713376, 1.0105853564653158, 1.57919621749409, 62.0, 1.1120660936771272, 1.078371694883013, 1.024838320332907, 1.1136107986501687, 1.125406283856988, 1.0238095238095237, 1.0371108932977322, 1.5, 1.0309178743961354, 1.475177304964539, 1.14002828854314, 36.0, 1.0178571428571428, 1.1205357142857142, 1.103448275862069, 1.0324345218572835, 1.0111259999187883, 1.0127600554785021, 1.016260162601626, 1.064102564102564, 1.0063227567734625, 1.2777777777777777, 1.0234029095509172, 1.207221350078493, 1.3272727272727274, 1.4022988505747127, 28.0, 1.040629132551138, 1.0147617039223955, 2.074074074074074, 1.2727272727272727, 1.1580498258773104, 1.0272177419354838, 1.2158273381294964, 1.0083194675540765, 1.1158061892404818, 1.1390625, 1.083697611303321, 1.0305676855895196, 1.2605633802816902, 1.003292421942163, 1.298715801228364, 4.206896551724138, 1.0, 9.6, 1.0893512851897185, 1.1372549019607843, 1.2650602409638554, 3.4444444444444446, 14.5, 1.0724632920540025, 1.0571474825967297, 1.0476975149193908, 1.0303259472131892, 1.2995238095238095, 1.0965732087227413, 1.0542857142857143, 1.0284090909090908, 1.6388888888888888, 2.92, 1.1904]
+origin-bjaq_15.87 	max: 62.0000	99th: 36.2600	95th: 9.0300	median: 1.1000	mean: 2.7424
+
+...Done, result: results.csv
+
+WORKLOAD-FINISHED | Type: QueryWorkload | Progress: 9/15 | Workload-time: 3.091101 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: DataUpdateWorkload | Progress: 10/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--model=naru', '--data_update=tupleskew', '--dataset=bjaq', '--drift_test=ddup', '--end2end', '--update_size=20000', '--query_seed=0', '--eval_type=drift']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+GET-DATASET-PATH=./data/bjaq/end2end/bjaq.npy
+TupleSkewSample - START
+0.001
+TupleSkewSample - END
+load_npy_dataset_from_path - df.shape = (482168, 5)
+Parsing... done, took 0.0s
+Data updated!
+Previous data size: (382168, 5), new data size: (100000, 5)
+done, took 0.0s
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+done, took 0.0s
+new data average log likelihood = 23.7852
+detection mean = 23.8595
+detection threshold = 0.2415
+test statistic = 0.0742
+Offline time = 2.1529548168182373
+Online time = 0.09462428092956543
+Test result: False
+DDUp Drift detection: False
+Detection latency: 3.1142s
+
+WORKLOAD-FINISHED | Type: DataUpdateWorkload | Progress: 10/15 | Workload-time: 5.332692 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: QueryWorkload | Progress: 11/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--dataset=bjaq', '--model=naru', '--end2end', '--query_seed=0', '--eval_type=estimate', '--num_workload=15', '--data_update=tupleskew', '--model_update=update', '--random_seed=42']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+ckpts [PosixPath('/home/kangping/code_copy/SAUCE/models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt')]
+Validate Argument: DATASET="bjaq" is valid.
+data size: 482168, total size: 482168, split index: [401806 482168]
+Parsing... done, took 0.0s
+Loading ckpt: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+query_seed:0
+origin-bjaq_15.87 	max: 109.0000	99th: 28.8100	95th: 7.8812	median: 1.1039	mean: 3.0018
+ReportEsts: [1.164835164835165, 1.0012806830309497, 1.0400854516214204, 1.0153374233128833, 1.2333333333333334, 1.0, 1.193802732020892, 1.017417034447183, 1.0, 1.2066752246469834, 1.1302058069433858, 1.0049051768852126, 1.0703205791106516, 1.1637080867850098, 1.1022982062780269, 1.3263157894736841, 1.0338028169014084, 7.875, 1.2, 1.049738219895288, 1.095904761904762, 1.1092049876896195, 1.5890410958904109, 1.025573192239859, 1.0172576467157293, 1.012957669285246, 2.0, 1.04035412806259, 1.1666666666666667, 1.6, 1.1240601503759398, 1.0, 1.0027989618153552, 1.0115909820360447, 1.342403628117914, 1.0596815364045218, 1.0107762605319457, 1.4458874458874458, 109.0, 1.1442993248785411, 1.0617479712713367, 1.0177872214397146, 1.2177121771217712, 1.105424769703173, 1.028523489932886, 1.0122204805016155, 1.5, 1.0539534883720931, 1.0297029702970297, 1.17100633356791, 18.0, 1.1122448979591837, 1.0726495726495726, 1.1724137931034482, 1.0681736714759387, 1.0184864240323512, 1.1141050730091826, 1.0824949698189135, 1.1153846153846154, 1.0007878248238677, 1.4259259259259258, 1.0168155501087106, 1.1747430249632893, 1.290909090909091, 1.4022988505747127, 28.0, 1.036190167301819, 1.0241183623834618, 2.074074074074074, 1.3636363636363635, 1.1000781860828772, 1.050485436893204, 1.258612769866789, 1.0288, 1.1221738150679788, 1.0720588235294117, 1.1160834990059643, 1.0305676855895196, 1.4630872483221478, 1.0200452980935566, 1.2366925064599483, 4.206896551724138, 1.0, 8.0, 1.0174621653084983, 1.1372549019607843, 1.037037037037037, 3.4444444444444446, 14.5, 1.0817236722258865, 1.0795472166227322, 1.0054260697989887, 1.0072717673034464, 1.293376117350447, 1.1993769470404985, 1.0085324232081911, 1.0441988950276244, 1.236413043478261, 2.8076923076923075, 1.1827956989247312]
+origin-bjaq_15.87 	max: 109.0000	99th: 28.8100	95th: 7.8812	median: 1.1039	mean: 3.0018
+
+...Done, result: results.csv
+
+WORKLOAD-FINISHED | Type: QueryWorkload | Progress: 11/15 | Workload-time: 3.044108 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: DataUpdateWorkload | Progress: 12/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--model=naru', '--data_update=tupleskew', '--dataset=bjaq', '--drift_test=ddup', '--end2end', '--update_size=20000', '--query_seed=0', '--eval_type=drift']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+GET-DATASET-PATH=./data/bjaq/end2end/bjaq.npy
+TupleSkewSample - START
+0.001
+TupleSkewSample - END
+load_npy_dataset_from_path - df.shape = (502168, 5)
+Parsing... done, took 0.0s
+Data updated!
+Previous data size: (382168, 5), new data size: (120000, 5)
+done, took 0.0s
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+done, took 0.0s
+new data average log likelihood = 24.0020
+detection mean = 23.8556
+detection threshold = 0.2370
+test statistic = 0.1465
+Offline time = 2.120786428451538
+Online time = 0.0861055850982666
+Test result: False
+DDUp Drift detection: False
+Detection latency: 3.0511s
+
+WORKLOAD-FINISHED | Type: DataUpdateWorkload | Progress: 12/15 | Workload-time: 5.237890 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: QueryWorkload | Progress: 13/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--dataset=bjaq', '--model=naru', '--end2end', '--query_seed=0', '--eval_type=estimate', '--num_workload=15', '--data_update=tupleskew', '--model_update=update', '--random_seed=42']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+ckpts [PosixPath('/home/kangping/code_copy/SAUCE/models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt')]
+Validate Argument: DATASET="bjaq" is valid.
+data size: 502168, total size: 502168, split index: [418473 502168]
+Parsing... done, took 0.0s
+Loading ckpt: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+query_seed:0
+origin-bjaq_15.87 	max: 109.0000	99th: 36.7300	95th: 2.3519	median: 1.0901	mean: 2.9554
+ReportEsts: [1.0899742930591259, 1.01949802945447, 1.0523209015293802, 1.0797546012269938, 1.2, 1.0, 1.174237739618513, 1.0088983094236066, 1.0, 1.1929611650485437, 1.0695406894100925, 1.0043196971595518, 1.1405863652419639, 1.1676528599605522, 1.0964604161037557, 1.321541377132028, 1.0732394366197182, 7.875, 1.2, 1.0335051546391754, 1.1030899644517365, 1.0370454717983755, 1.5816326530612246, 1.0357751277683134, 1.024013157894737, 1.0111659082017173, 2.0, 1.0810678106264213, 1.0, 2.0, 1.0903225806451613, 1.0, 1.00005125609467, 1.0028512648547163, 1.2610169491525425, 1.0955095393206142, 1.00133936468626, 1.4148296593186374, 109.0, 1.135237295254095, 1.1284916201117319, 1.00129848565356, 1.0382293762575452, 1.0433171183692378, 1.1006711409395973, 1.1620334438721514, 1.6666666666666667, 1.0630590339892665, 1.0576923076923077, 1.1437206178643384, 36.0, 1.075657894736842, 1.0244897959183674, 1.1724137931034482, 1.0321557922340323, 1.0382767993446773, 1.0699757134183363, 1.1362763915547025, 1.1666666666666667, 1.0124435020367166, 1.5555555555555556, 1.0186644545831605, 1.1650485436893203, 1.35, 1.4252873563218391, 28.0, 1.0094524375277436, 1.0477984926616422, 2.0, 1.4545454545454546, 1.1444499504459862, 1.007400555041628, 1.2293780326422585, 1.123076923076923, 1.157865252464894, 1.064066852367688, 1.0842704111726316, 1.107981220657277, 1.0441916208095607, 1.0306569343065692, 1.744186046511628, 1.0043921977870198, 1.6428571428571428, 1.045450799406626, 1.5950920245398772, 1.010942760942761, 1.070020120724346, 1.36, 1.0083597670783322, 1.0625850978919198, 1.1074918566775245, 2.3333333333333335, 1.0710955710955712, 1.0196248352560977, 1.3707165109034267, 1.0049342105263157, 1.0441988950276244, 1.327445652173913, 2.7037037037037037, 1.1887005649717515]
+origin-bjaq_15.87 	max: 109.0000	99th: 36.7300	95th: 2.3519	median: 1.0901	mean: 2.9554
+
+...Done, result: results.csv
+
+WORKLOAD-FINISHED | Type: QueryWorkload | Progress: 13/15 | Workload-time: 3.138942 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: DataUpdateWorkload | Progress: 14/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--model=naru', '--data_update=tupleskew', '--dataset=bjaq', '--drift_test=ddup', '--end2end', '--update_size=20000', '--query_seed=0', '--eval_type=drift']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+GET-DATASET-PATH=./data/bjaq/end2end/bjaq.npy
+TupleSkewSample - START
+0.001
+TupleSkewSample - END
+load_npy_dataset_from_path - df.shape = (522168, 5)
+Parsing... done, took 0.0s
+Data updated!
+Previous data size: (382168, 5), new data size: (140000, 5)
+done, took 0.0s
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+sample size: 500
+done, took 0.0s
+new data average log likelihood = 24.0656
+detection mean = 23.8676
+detection threshold = 0.2387
+test statistic = 0.1980
+Offline time = 2.1714062690734863
+Online time = 0.08660650253295898
+Test result: False
+DDUp Drift detection: False
+Detection latency: 3.1077s
+
+WORKLOAD-FINISHED | Type: DataUpdateWorkload | Progress: 14/15 | Workload-time: 5.298085 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: QueryWorkload | Progress: 15/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--dataset=bjaq', '--model=naru', '--end2end', '--query_seed=0', '--eval_type=estimate', '--num_workload=15', '--data_update=tupleskew', '--model_update=update', '--random_seed=42']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+ckpts [PosixPath('/home/kangping/code_copy/SAUCE/models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt')]
+Validate Argument: DATASET="bjaq" is valid.
+data size: 522168, total size: 522168, split index: [435140 522168]
+Parsing... done, took 0.0s
+Loading ckpt: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt
+query_seed:0
+origin-bjaq_15.87 	max: 180.0000	99th: 64.1700	95th: 6.6200	median: 1.0838	mean: 3.9870
+ReportEsts: [1.078880407124682, 1.0026444263628966, 1.0123221010153325, 1.0194174757281553, 1.2666666666666666, 1.0, 1.1986620530565166, 1.0201435701644495, 1.0, 1.1537598204264872, 1.03495905407428, 1.0047690667478963, 1.147693328908065, 1.2169625246548323, 1.0039100684261975, 1.2709599027946537, 1.0285714285714285, 7.0, 1.2, 1.0813475760065736, 1.0277407308615631, 1.0080965699985278, 1.9135802469135803, 1.0057565789473684, 1.0004824827629142, 1.0136775890519734, 2.0, 1.0862755704169944, 1.3333333333333333, 1.8, 1.096774193548387, 1.0, 1.00079246632789, 1.009416657422003, 9.76923076923077, 1.0332844437509752, 1.8571428571428572, 1.1056338028169015, 180.0, 1.6206896551724137, 1.1291071428571429, 1.4404761904761905, 1.0192610062893082, 1.0786749482401656, 6.6, 1.022810218978102, 1.0150918635170603, 1.628099173553719, 1.5825242718446602, 1.3475409836065573, 1.025959243956473, 1.0526315789473684, 1.0376423678964095, 1.118881118881119, 1.0026272859530971, 1.0, 1.3624161073825503, 1.0207742715062509, 1.114719748559455, 1.0919220055710306, 1.6645962732919255, 1.0, 1.0, 1.0364289379168805, 1.0289855072463767, 1.0025479215137227, 1.3571428571428572, 3.4074074074074074, 1.0257037320086613, 1.1196095520306781, 2.1, 1.0, 1.111727078891258, 1.0434496888167304, 1.044976076555024, 1.0911808669656202, 1.1103162260238466, 1.1528571428571428, 1.0567169638774576, 1.2118644067796611, 1.040369126422539, 1.0287388392857142, 1.5625, 1.0047731500726733, 63.0, 1.0108380505315477, 2.7333333333333334, 1.0057596936333173, 1.0885761589403973, 1.3658536585365855, 1.2, 19.0, 1.0376908741566866, 1.0678525319179457, 1.0891714553531402, 1.0306975469370974, 1.2648104867391525, 1.2461059190031152, 1.0338849487785657, 1.2119815668202765]
+origin-bjaq_15.87 	max: 180.0000	99th: 64.1700	95th: 6.6200	median: 1.0838	mean: 3.9870
+
+...Done, result: results.csv
+
+WORKLOAD-FINISHED | Type: QueryWorkload | Progress: 15/15 | Workload-time: 3.153290 | Model-update-time: 0.000000
+
+
+Experiment Summary: #data-update-times=7, #drift=0 | total-time=61.773838

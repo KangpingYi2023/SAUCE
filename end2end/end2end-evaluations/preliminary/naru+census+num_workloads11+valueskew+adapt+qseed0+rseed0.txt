@@ -1,0 +1,6 @@
+origin-census_12.27 	max: 4.0000	99th: 4.0000	95th: 2.0000	median: 1.0503	mean: 1.2389
+origin-census_12.27 	max: 3.6083	99th: 3.5011	95th: 2.0000	median: 1.1533	mean: 1.3805
+origin-census_12.27 	max: 12.4444	99th: 5.6335	95th: 4.0000	median: 1.2645	mean: 1.9202
+origin-census_12.27 	max: 19.1111	99th: 8.1111	95th: 7.0000	median: 1.4171	mean: 2.6679
+origin-census_12.27 	max: 14.0000	99th: 13.0100	95th: 10.0000	median: 1.6317	mean: 3.2924
+origin-census_12.27 	max: 26.0000	99th: 20.0600	95th: 13.1000	median: 1.9087	mean: 4.0697

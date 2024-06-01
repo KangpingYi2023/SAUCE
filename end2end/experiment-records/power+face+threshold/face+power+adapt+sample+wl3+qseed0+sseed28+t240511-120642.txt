@@ -1,0 +1,143 @@
+Input arguments = Namespace(data_update='sample', update_size=400000, dataset='power', debug=False, drift_test='js', model_update='adapt', model='face', end2end=False, query_seed=0, random_seed=42, num_workload=3)
+JSON-passed parameters = {'data_updater': {'skew_ratio': '1e-3'}, 'random_seed': 28, 'face': {'learning_rate': '1e-4', 'epochs': 0, 'factor': 'auto'}}
+MODEL-PATH=/home/kangping/code_copy/SAUCE/models/end2end/face/power-id1-best-val.t
+DATASET-PATH=/home/kangping/code_copy/SAUCE/data/power/end2end/power.npy
+Workloads: ['QueryWorkload', 'DataUpdateWorkload', 'QueryWorkload']
+
+WORKLOAD-START | Type: QueryWorkload | Progress: 1/3
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/FACE/evaluate/Evaluate-FACE-end2end.py', '--dataset=power', '--end2end']
+/home/kangping/code_copy/SAUCE/./FACE/FACE_utils/dataUtils.py:321: RuntimeWarning: invalid value encountered in cast
+  oracle_cards = oracle_cards.astype(np.int32)
+/home/kangping/anaconda3/envs/LndCar/lib/python3.9/site-packages/torchquad/integration/vegas_map.py:314: UserWarning: torch.searchsorted(): input value tensor is non-contiguous, this will lower the performance due to extra data copy when converting non-contiguous tensor to contiguous, please use contiguous input value tensor if possible. This message will only appear once per program. (Triggered internally at /opt/conda/conda-bld/pytorch_1682343997789/work/aten/src/ATen/native/BucketizationUtils.h:33.)
+  iy = torch.searchsorted(self.x_edges[d, :], x[:, d], side='right')
+DEVICE NAME
+ Tesla V100S-PCIE-32GB
+GET-MODEL-PATH=./models/end2end/face/power-id1-best-val.t
+Load model - START
+Load model from: /home/kangping/code_copy/SAUCE/models/end2end/face/power-id1-best-val.t
+There are 330954 trainable parameters in this model.
+Parameters total size is 1.2624893188476562 MB
+Load model - END
+There are 330954 trainable parameters in this model.
+Parameters total size is 1.2624893188476562 MB
+GET-DATASET-PATH=./data/power/end2end/power.npy
+data shape: (2049280, 6)
+Save oracle results to :
+./FACE/evaluate/oracle/power_rng-1234.csv
+Found oracle card!
+torch.Size([6, 2])
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+Took  28.869078159332275
+tensor(0.9912)
+result is  tensor(2031329.2500)
+Enter testHyper
+ReportEsts: [1.0037769079208374, 1.1168962717056274, 1.0706766843795776, 1.2230112552642822, 1.1093236207962036, 1.045520544052124, 1.0264863967895508, 1.0068330764770508, 1.0355995893478394, 1.0358632802963257, 1.3505808115005493, 1.0002281665802002, 1.1821705102920532, 1.0927503108978271, 1.0494037866592407, 1.0882537364959717, 1.0161757469177246, 1.0037049055099487, 1.1982423067092896, 1.099668025970459, 1.1300746202468872, 1.0958083868026733, 1.008311152458191, 1.0140385627746582, 1.0330411195755005, 1.0665680170059204, 1.0177054405212402, 1.1989972591400146, 1.273863673210144, 1.0980221033096313, 1.2120190858840942, 1.097241759300232, 1.0904134511947632, 1.0158932209014893, 1.063664197921753, 1.0051006078720093, 1.0732961893081665, 1.152961015701294, 1.040816307067871, 1.002039909362793, 1.0808061361312866, 1.1020407676696777, 1.0433491468429565, 1.120204210281372, 1.0007179975509644, 1.073178768157959, 1.2160512208938599, 1.1904380321502686, 1.0461338758468628, 1.1227970123291016, 1.1710007190704346, 1.023877739906311, 1.00259530544281, 1.1768548488616943, 1.0899195671081543, 1.0814217329025269, 1.0579179525375366, 1.0891467332839966, 1.0687732696533203, 1.1554176807403564, 1.012310266494751, 1.033935308456421, 1.027593970298767, 1.018357515335083, 1.01856529712677, 1.2470099925994873, 1.0101286172866821, 1.0263136625289917, 1.0416061878204346, 1.3113038539886475, 1.065237045288086, 1.2103544473648071, 1.0896315574645996, 1.4397163391113281, 1.3893263339996338, 1.0304460525512695, 1.2385026216506958, 1.0468229055404663, 1.1704775094985962, 1.2571083307266235, 1.068574070930481, 1.1539839506149292, 1.035573124885559, 1.052718162536621, 1.1797919273376465, 1.049511194229126, 1.0927374362945557, 1.1511191129684448, 1.0002723932266235, 1.0023988485336304, 1.015493631362915, 1.0674068927764893, 1.0290652513504028, 1.0269460678100586, 1.010973572731018, 1.0393344163894653, 1.0883885622024536, 1.053256869316101, 1.0970737934112549, 1.1223710775375366]
+********** total_n=[100] batchn=[100]  N=[3200]  nitr=[4]  alpha=[0.4]  beta=[0.2] ******
+@ Average per query          [36.85316562652588] ms
+ --  Average per query NF    [11.27467155456543] ms
+ --  Average per query vegas [25.57849407196045] ms
+Mean [1.094]  Median [1.069]  95th [1.258]  99th [1.390]  max [1.440]
+Mean [1.094]  Median [1.069]  95th [1.258]  99th [1.390]  max [1.440]
+
+
+WORKLOAD-FINISHED | Type: QueryWorkload | Progress: 1/3 | Workload-time: 36.449019 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: DataUpdateWorkload | Progress: 2/3
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--model=face', '--data_update=sample', '--dataset=power', '--drift_test=js', '--end2end', '--update_size=400000', '--query_seed=0', '--eval_type=drift']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/face/power-id1-best-val.t
+GET-DATASET-PATH=./data/power/end2end/power.npy
+Sample - START
+Sample - END
+load_npy_dataset_from_path - df.shape = (2449280, 6)
+Parsing... done, took 3.1s
+Data updated!
+Previous data size: (2049280, 6), new data size: (400000, 6)
+[1.1324883e-06 1.1324883e-06 5.1915646e-05 2.1934509e-05 2.9802322e-07
+ 6.5565109e-07]
+Distance score: 1.284480094909668e-05
+SAUCE Drift detection: False
+Detection latency: 0.1761s
+
+WORKLOAD-FINISHED | Type: DataUpdateWorkload | Progress: 2/3 | Workload-time: 5.789397 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: QueryWorkload | Progress: 3/3
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/FACE/evaluate/Evaluate-FACE-end2end.py', '--dataset=power', '--query_seed=0', '--end2end', '--num_workload=3', '--data_update=sample', '--model_update=adapt']
+/home/kangping/code_copy/SAUCE/./FACE/FACE_utils/dataUtils.py:321: RuntimeWarning: invalid value encountered in cast
+  oracle_cards = oracle_cards.astype(np.int32)
+/home/kangping/anaconda3/envs/LndCar/lib/python3.9/site-packages/torchquad/integration/vegas_map.py:314: UserWarning: torch.searchsorted(): input value tensor is non-contiguous, this will lower the performance due to extra data copy when converting non-contiguous tensor to contiguous, please use contiguous input value tensor if possible. This message will only appear once per program. (Triggered internally at /opt/conda/conda-bld/pytorch_1682343997789/work/aten/src/ATen/native/BucketizationUtils.h:33.)
+  iy = torch.searchsorted(self.x_edges[d, :], x[:, d], side='right')
+DEVICE NAME
+ Tesla V100S-PCIE-32GB
+GET-MODEL-PATH=./models/end2end/face/power-id1-best-val.t
+Load model - START
+Load model from: /home/kangping/code_copy/SAUCE/models/end2end/face/power-id1-best-val.t
+There are 330954 trainable parameters in this model.
+Parameters total size is 1.2624893188476562 MB
+Load model - END
+There are 330954 trainable parameters in this model.
+Parameters total size is 1.2624893188476562 MB
+GET-DATASET-PATH=./data/power/end2end/power.npy
+data shape: (2449280, 6)
+Save oracle results to :
+./FACE/evaluate/oracle/power_rng-0.csv
+Found oracle card!
+torch.Size([6, 2])
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+******** ANY
+Took  30.32074213027954
+tensor(0.9986)
+result is  tensor(2445854.7500)
+Enter testHyper
+ReportEsts: [1.1364142894744873, 1.1764622926712036, 1.1155675649642944, 1.0030900239944458, 1.100000023841858, 1.0638792514801025, 1.0401216745376587, 1.0076346397399902, 1.0513845682144165, 1.0533019304275513, 1.0802226066589355, 1.0, 1.0662251710891724, 1.0422213077545166, 1.1132407188415527, 1.0339754819869995, 1.0083916187286377, 1.0064407587051392, 1.0718774795532227, 1.054613709449768, 1.0772993564605713, 1.0608826875686646, 1.0475026369094849, 1.032593011856079, 1.1266288757324219, 1.016517162322998, 1.126207947731018, 1.084134578704834, 1.0990413427352905, 1.2828443050384521, 1.1130995750427246, 1.0002249479293823, 1.150849461555481, 1.0653083324432373, 1.0462677478790283, 1.0773483514785767, 1.1304686069488525, 1.114302635192871, 1.025173306465149, 1.136581301689148, 1.077725887298584, 1.031638503074646, 1.1938940286636353, 1.0606194734573364, 1.104276418685913, 1.0292521715164185, 1.2054643630981445, 1.0179054737091064, 1.0031780004501343, 1.0469268560409546, 1.0474960803985596, 1.0773640871047974, 1.0, 1.0678398609161377, 1.08260977268219, 1.0842924118041992, 1.0835201740264893, 1.0079880952835083, 1.0091947317123413, 1.0046535730361938, 1.0797778367996216, 1.06097412109375, 1.087814211845398, 1.0049512386322021, 1.0220495462417603, 1.0060651302337646, 1.0054869651794434, 1.2737573385238647, 1.3870967626571655, 1.0176711082458496, 1.0491408109664917, 1.0664849281311035, 1.094428300857544, 1.0819414854049683, 1.4843465089797974, 1.1717171669006348, 1.1614567041397095, 1.0836126804351807, 1.302011489868164, 1.1155829429626465, 1.000131368637085, 1.0343328714370728, 1.0849772691726685, 1.9296875, 1.1745283603668213, 1.0034914016723633, 1.02090585231781, 1.322950839996338, 1.1464239358901978, 1.1114616394042969, 1.0363410711288452, 1.1080430746078491, 1.1903226375579834, 1.098734974861145, 1.0001180171966553, 1.0368332862854004, 1.1067057847976685, 1.0836490392684937, 1.0591883659362793, 1.0534213781356812]
+********** total_n=[100] batchn=[100]  N=[3200]  nitr=[4]  alpha=[0.4]  beta=[0.2] ******
+@ Average per query          [5.855152606964111] ms
+ --  Average per query NF    [1.9114089012145996] ms
+ --  Average per query vegas [3.9437437057495117] ms
+Mean [1.094]  Median [1.070]  95th [1.284]  99th [1.489]  max [1.930]
+Mean [1.094]  Median [1.070]  95th [1.284]  99th [1.489]  max [1.930]
+
+
+WORKLOAD-FINISHED | Type: QueryWorkload | Progress: 3/3 | Workload-time: 35.579370 | Model-update-time: 0.000000
+
+
+Experiment Summary: #data-update-times=1, #drift=0 | total-time=78.070514

@@ -1,0 +1,6 @@
+origin-forest_39.80 	max: 18.0000	99th: 13.0500	95th: 3.0000	median: 1.0339	mean: 1.5895
+origin-forest_39.80 	max: 121.8438	99th: 20.0284	95th: 4.0250	median: 1.3333	mean: 3.0907
+origin-forest_39.80 	max: 228.0294	99th: 7.7253	95th: 4.0000	median: 1.3565	mean: 4.1973
+origin-forest_39.80 	max: 332.8571	99th: 15.8686	95th: 6.5250	median: 1.4495	mean: 5.8693
+origin-forest_39.80 	max: 431.2778	99th: 16.1928	95th: 8.0000	median: 1.6909	mean: 7.3944
+origin-forest_39.80 	max: 538.6111	99th: 159.8261	95th: 11.1000	median: 1.6553	mean: 10.6839

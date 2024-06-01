@@ -1,0 +1,507 @@
+Input arguments = Namespace(data_update='valueskew', update_size=25000, dataset='forest', debug=False, drift_test='distribution', model_update='adapt', model='naru', end2end=False, query_seed=0, random_seed=42, num_workload=15)
+JSON-passed parameters = {'data_updater': {'skew_ratio': '1e-3'}, 'random_seed': 1226, 'naru': {'epochs': 40}}
+MODEL-PATH=/home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+DATASET-PATH=/home/kangping/code_copy/SAUCE/data/forest/end2end/forest.npy
+Workloads: ['QueryWorkload', 'DataUpdateWorkload', 'QueryWorkload', 'DataUpdateWorkload', 'QueryWorkload', 'DataUpdateWorkload', 'QueryWorkload', 'DataUpdateWorkload', 'QueryWorkload', 'DataUpdateWorkload', 'QueryWorkload', 'DataUpdateWorkload', 'QueryWorkload', 'DataUpdateWorkload', 'QueryWorkload']
+
+WORKLOAD-START | Type: QueryWorkload | Progress: 1/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--dataset=forest', '--model=naru', '--query_seed=0', '--end2end', '--eval_type=first_estimate', '--num_workload=15', '--data_update=valueskew', '--model_update=adapt', '--random_seed=42']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+ckpts [PosixPath('/home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt')]
+Validate Argument: DATASET="forest" is valid.
+load_csv_dataset - forest (581012, 10)
+Parsing... done, took 0.1s
+Loading ckpt: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+query_seed:0
+origin-forest_43.39 	max: 9.0000	99th: 4.0500	95th: 3.0000	median: 1.0459	mean: 1.4235
+ReportEsts: [2.0, 1.1079659318637274, 1.0, 1.6857142857142857, 2.6666666666666665, 1.0, 1.5118110236220472, 1.0, 2.3, 1.0, 1.0634920634920635, 3.0, 1.0, 1.0, 2.0, 1.026416201937188, 1.0, 1.4285714285714286, 1.1886792452830188, 1.0, 1.0, 3.0, 1.8181818181818181, 1.4, 2.2, 1.0, 1.081629222925654, 1.3, 3.0, 1.037463976945245, 1.0, 1.0091086532205595, 1.5555555555555556, 1.0, 1.7575757575757576, 1.0262318326834456, 1.0293062200956937, 1.0, 1.2536382536382535, 1.0, 2.0, 1.0, 1.4166666666666667, 1.0, 1.3369565217391304, 1.1090909090909091, 1.0, 2.0, 1.0, 1.0, 3.0, 1.0542744656917886, 1.0, 1.0, 9.0, 1.080568720379147, 1.0818897637795275, 1.3529411764705883, 1.0, 1.0, 1.006872852233677, 1.6666666666666667, 1.0, 1.1497716894977168, 1.197452229299363, 1.0, 1.0598669623059866, 1.4356435643564356, 1.3373493975903614, 1.0, 2.0, 1.0, 1.218274111675127, 1.0074760450668632, 2.0, 1.5, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0050359294195124, 2.3333333333333335, 1.4230769230769231, 1.0, 1.0, 1.3333333333333333, 1.013888057467824, 1.0, 4.0, 1.2391304347826086, 1.0, 1.0907787864309604, 1.0, 1.0, 1.0130536650674997, 1.4373673036093417, 1.0, 1.0]
+origin-forest_43.39 	max: 9.0000	99th: 4.0500	95th: 3.0000	median: 1.0459	mean: 1.4235
+
+...Done, result: results.csv
+
+WORKLOAD-FINISHED | Type: QueryWorkload | Progress: 1/15 | Workload-time: 5.355931 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: DataUpdateWorkload | Progress: 2/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--model=naru', '--data_update=valueskew', '--dataset=forest', '--drift_test=distribution', '--end2end', '--update_size=25000', '--query_seed=0', '--eval_type=drift']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+GET-DATASET-PATH=./data/forest/end2end/forest.npy
+ValueSample - START
+ValueSample - END
+load_npy_dataset_from_path - df.shape = (606012, 10)
+Parsing... done, took 0.1s
+Data updated!
+Previous data size: (581012, 10), new data size: (25000, 10)
+[ 2.3841858e-07  5.9604645e-08 -2.9802322e-08  2.3841858e-07
+  5.9604645e-08  5.9604645e-08  0.0000000e+00  1.3113022e-06
+  1.2738705e-03  1.1920929e-07]
+Distance score: 0.00012759267701767385
+SAUCE Drift detection: True
+Detection latency: 0.0612s
+
+DRIFT-DETECTED after 2-th workload
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/incremental_train.py', '--dataset=forest', '--end2end', '--model=naru', '--model_update=adapt', '--update_size=25000', '--epochs=40']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+update_size: 25000
+AdaptTask - START
+GET-DATASET-PATH=./data/forest/end2end/forest.npy
+load_npy_dataset_from_path - df.shape = (606012, 10)
+Parsing... done, took 0.1s
+done, took 0.1s
+dataset size: 606012
+train data shape: torch.Size([25000, 10]), transfer data shape:torch.Size([5000, 10])
+Epoch 0 Iter 0, train entropy gap 45.6994 bits (loss 64.906, data 19.207) 0.00400 lr
+epoch 10 train loss 26.3392 nats / 37.9994 bits
+time since start: 4.3 secs
+Epoch 10 Iter 0, train entropy gap 18.2473 bits (loss 37.454, data 19.207) 0.00341 lr
+epoch 20 train loss 23.9714 nats / 34.5834 bits
+time since start: 8.2 secs
+Epoch 20 Iter 0, train entropy gap 15.2374 bits (loss 34.444, data 19.207) 0.00200 lr
+epoch 30 train loss 23.2252 nats / 33.5068 bits
+time since start: 12.1 secs
+Epoch 30 Iter 0, train entropy gap 14.1796 bits (loss 33.387, data 19.207) 0.00059 lr
+epoch 40 train loss 23.0996 nats / 33.3257 bits
+time since start: 16.0 secs
+Training done; evaluating likelihood on full data:
+Epoch None Iter 0, test loss 52.2544 nats / 75.3872 bits
+Saved to: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+AdaptTask - END
+
+WORKLOAD-FINISHED | Type: DataUpdateWorkload | Progress: 2/15 | Workload-time: 2.271858 | Model-update-time: 20.149208
+
+
+WORKLOAD-START | Type: QueryWorkload | Progress: 3/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--dataset=forest', '--model=naru', '--end2end', '--query_seed=0', '--eval_type=estimate', '--num_workload=15', '--data_update=valueskew', '--model_update=adapt', '--random_seed=42']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+ckpts [PosixPath('/home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt')]
+Validate Argument: DATASET="forest" is valid.
+data size: 606012, total size: 606012, split index: [505010 606012]
+Parsing... done, took 0.1s
+Loading ckpt: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+query_seed:0
+origin-forest_43.39 	max: 10.0000	99th: 8.7271	95th: 4.0192	median: 1.1036	mean: 1.7514
+ReportEsts: [1.0, 1.097539734378402, 1.0, 8.714285714285714, 4.0, 1.0, 1.5058823529411764, 1.0, 1.4291338582677164, 1.0, 1.0704225352112675, 3.0, 1.0, 1.0, 6.0, 2.0, 1.7322834645669292, 1.0, 1.4473684210526316, 3.1904761904761907, 1.0, 3.0, 1.4, 1.5, 1.6666666666666667, 1.0, 1.0047212006758772, 1.0769230769230769, 3.0, 1.004341534008683, 1.0, 1.1578947368421053, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 2.230769230769231, 1.0, 1.0, 1.0429815016322088, 5.0, 1.2479249772552312, 1.0, 1.4876847290640394, 2.0, 1.0, 1.088235294117647, 1.0, 4.0, 1.057656116338751, 1.0, 1.0, 3.8, 1.5034482758620689, 1.1357894736842105, 1.3529411764705883, 1.0, 1.0, 1.6219208414060338, 10.0, 1.0, 1.2390139335476955, 1.5617283950617284, 1.0, 1.0775862068965518, 1.6633663366336633, 1.6679104477611941, 1.0, 2.0, 1.0, 2.730337078651685, 1.1398963730569949, 2.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.1096826628246332, 3.5, 4.384615384615385, 1.0, 1.0, 2.0, 1.3160797289844797, 1.0, 1.3333333333333333, 2.8333333333333335, 1.223582089552239, 2.8823529411764706, 3.0555555555555554, 1.7142857142857142, 1.0, 1.0, 2.0, 1.1439954467842914]
+origin-forest_43.39 	max: 10.0000	99th: 8.7271	95th: 4.0192	median: 1.1036	mean: 1.7514
+
+...Done, result: results.csv
+
+WORKLOAD-FINISHED | Type: QueryWorkload | Progress: 3/15 | Workload-time: 5.031409 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: DataUpdateWorkload | Progress: 4/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--model=naru', '--data_update=valueskew', '--dataset=forest', '--drift_test=distribution', '--end2end', '--update_size=25000', '--query_seed=0', '--eval_type=drift']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+GET-DATASET-PATH=./data/forest/end2end/forest.npy
+ValueSample - START
+ValueSample - END
+load_npy_dataset_from_path - df.shape = (631012, 10)
+Parsing... done, took 0.1s
+Data updated!
+Previous data size: (606012, 10), new data size: (25000, 10)
+[ 5.9604645e-08  0.0000000e+00 -2.9802322e-08  0.0000000e+00
+  5.9604645e-08  5.9604645e-08  0.0000000e+00  5.9604645e-08
+  1.0614991e-03 -2.9802322e-08]
+Distance score: 0.00010616779036354274
+SAUCE Drift detection: True
+Detection latency: 0.0856s
+
+DRIFT-DETECTED after 4-th workload
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/incremental_train.py', '--dataset=forest', '--end2end', '--model=naru', '--model_update=adapt', '--update_size=25000', '--epochs=40']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+update_size: 25000
+AdaptTask - START
+GET-DATASET-PATH=./data/forest/end2end/forest.npy
+load_npy_dataset_from_path - df.shape = (631012, 10)
+Parsing... done, took 0.1s
+done, took 0.1s
+dataset size: 631012
+train data shape: torch.Size([25000, 10]), transfer data shape:torch.Size([5000, 10])
+Epoch 0 Iter 0, train entropy gap 20.5977 bits (loss 39.781, data 19.183) 0.00400 lr
+epoch 10 train loss 24.1385 nats / 34.8245 bits
+time since start: 4.5 secs
+Epoch 10 Iter 0, train entropy gap 15.4697 bits (loss 34.653, data 19.183) 0.00341 lr
+epoch 20 train loss 22.9204 nats / 33.0671 bits
+time since start: 8.6 secs
+Epoch 20 Iter 0, train entropy gap 13.9306 bits (loss 33.114, data 19.183) 0.00200 lr
+epoch 30 train loss 22.4482 nats / 32.3859 bits
+time since start: 12.4 secs
+Epoch 30 Iter 0, train entropy gap 13.2702 bits (loss 32.454, data 19.183) 0.00059 lr
+epoch 40 train loss 22.3437 nats / 32.2351 bits
+time since start: 16.3 secs
+Training done; evaluating likelihood on full data:
+Epoch None Iter 0, test loss 45.9792 nats / 66.3339 bits
+Saved to: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+AdaptTask - END
+
+WORKLOAD-FINISHED | Type: DataUpdateWorkload | Progress: 4/15 | Workload-time: 2.329319 | Model-update-time: 20.288241
+
+
+WORKLOAD-START | Type: QueryWorkload | Progress: 5/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--dataset=forest', '--model=naru', '--end2end', '--query_seed=0', '--eval_type=estimate', '--num_workload=15', '--data_update=valueskew', '--model_update=adapt', '--random_seed=42']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+ckpts [PosixPath('/home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt')]
+Validate Argument: DATASET="forest" is valid.
+data size: 631012, total size: 631012, split index: [525843 631012]
+Parsing... done, took 0.1s
+Loading ckpt: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+query_seed:0
+origin-forest_43.39 	max: 20.0000	99th: 13.4660	95th: 5.0000	median: 1.1707	mean: 1.9918
+ReportEsts: [1.0, 1.0921384368553748, 1.0, 2.0, 4.0, 1.0, 3.072, 1.0, 1.131578947368421, 1.0, 1.445945945945946, 1.0585480093676816, 1.0, 2.5, 13.4, 1.3571428571428572, 1.0, 2.0, 1.719298245614035, 2.5211267605633805, 1.0, 3.0, 1.4666666666666666, 1.4, 1.4, 1.0, 1.0809759125307359, 1.5, 3.0, 1.1139646869983948, 1.0, 1.3333333333333333, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 2.0714285714285716, 1.0, 1.0, 1.5992925720060636, 5.0, 1.2406144769432, 1.0, 1.2115384615384615, 2.0, 1.0, 2.5526315789473686, 1.0, 5.0, 1.0103564610194316, 1.0, 1.0, 20.0, 1.1487179487179486, 1.025312595303446, 1.1764705882352942, 1.0, 2.0, 1.6926632004621607, 10.0, 1.0, 1.6167108753315649, 1.3928571428571428, 1.0, 1.044, 1.01, 1.759581881533101, 1.0, 2.0, 1.0, 2.2660550458715596, 1.164913471326773, 2.0, 1.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 1.0689532862767355, 7.0, 1.7307692307692308, 1.0, 1.0, 1.3333333333333333, 1.3022294979731837, 1.0, 2.0, 2.8461538461538463, 1.1432905067808707, 1.5185185185185186, 5.0, 2.4, 2.0, 1.0, 2.0, 1.260958904109589]
+origin-forest_43.39 	max: 20.0000	99th: 13.4660	95th: 5.0000	median: 1.1707	mean: 1.9918
+
+...Done, result: results.csv
+
+WORKLOAD-FINISHED | Type: QueryWorkload | Progress: 5/15 | Workload-time: 5.095485 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: DataUpdateWorkload | Progress: 6/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--model=naru', '--data_update=valueskew', '--dataset=forest', '--drift_test=distribution', '--end2end', '--update_size=25000', '--query_seed=0', '--eval_type=drift']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+GET-DATASET-PATH=./data/forest/end2end/forest.npy
+ValueSample - START
+ValueSample - END
+load_npy_dataset_from_path - df.shape = (656012, 10)
+Parsing... done, took 0.1s
+Data updated!
+Previous data size: (631012, 10), new data size: (25000, 10)
+[-2.9802322e-08  0.0000000e+00  0.0000000e+00  0.0000000e+00
+  5.9604645e-08  5.9604645e-08  5.9604645e-08  1.1920929e-07
+  8.9263916e-04  0.0000000e+00]
+Distance score: 8.929074101615697e-05
+SAUCE Drift detection: True
+Detection latency: 0.0893s
+
+DRIFT-DETECTED after 6-th workload
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/incremental_train.py', '--dataset=forest', '--end2end', '--model=naru', '--model_update=adapt', '--update_size=25000', '--epochs=40']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+update_size: 25000
+AdaptTask - START
+GET-DATASET-PATH=./data/forest/end2end/forest.npy
+load_npy_dataset_from_path - df.shape = (656012, 10)
+Parsing... done, took 0.1s
+done, took 0.1s
+dataset size: 656012
+train data shape: torch.Size([25000, 10]), transfer data shape:torch.Size([5000, 10])
+Epoch 0 Iter 0, train entropy gap 18.6433 bits (loss 37.777, data 19.133) 0.00400 lr
+epoch 10 train loss 23.6585 nats / 34.1320 bits
+time since start: 4.2 secs
+Epoch 10 Iter 0, train entropy gap 14.8887 bits (loss 34.022, data 19.133) 0.00341 lr
+epoch 20 train loss 22.6052 nats / 32.6123 bits
+time since start: 8.1 secs
+Epoch 20 Iter 0, train entropy gap 13.4737 bits (loss 32.607, data 19.133) 0.00200 lr
+epoch 30 train loss 22.1929 nats / 32.0176 bits
+time since start: 12.2 secs
+Epoch 30 Iter 0, train entropy gap 12.8474 bits (loss 31.981, data 19.133) 0.00059 lr
+epoch 40 train loss 22.1076 nats / 31.8946 bits
+time since start: 17.1 secs
+Training done; evaluating likelihood on full data:
+Epoch None Iter 0, test loss 43.7969 nats / 63.1856 bits
+Saved to: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+AdaptTask - END
+
+WORKLOAD-FINISHED | Type: DataUpdateWorkload | Progress: 6/15 | Workload-time: 2.338282 | Model-update-time: 21.093145
+
+
+WORKLOAD-START | Type: QueryWorkload | Progress: 7/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--dataset=forest', '--model=naru', '--end2end', '--query_seed=0', '--eval_type=estimate', '--num_workload=15', '--data_update=valueskew', '--model_update=adapt', '--random_seed=42']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+ckpts [PosixPath('/home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt')]
+Validate Argument: DATASET="forest" is valid.
+data size: 656012, total size: 656012, split index: [546676 656012]
+Parsing... done, took 0.1s
+Loading ckpt: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+query_seed:0
+origin-forest_43.39 	max: 19.1429	99th: 10.0914	95th: 4.6833	median: 1.2243	mean: 2.0365
+ReportEsts: [1.0, 1.0956627482772598, 1.0, 3.0, 8.0, 1.0, 2.075675675675676, 1.0, 1.3224181360201512, 1.0, 1.1948051948051948, 1.0148936170212766, 1.0, 3.0, 19.142857142857142, 1.5076923076923077, 1.0, 3.0, 2.107142857142857, 1.2096774193548387, 1.0, 2.0, 1.4375, 1.75, 1.25, 1.0, 1.0092021695795281, 1.7777777777777777, 1.5, 2.6590038314176243, 1.0, 2.3636363636363638, 1.0, 1.0, 1.0, 2.0, 1.0, 1.0, 2.4166666666666665, 1.0, 1.0, 1.1955702167766258, 5.0, 1.2877404818302618, 1.0, 1.0030674846625767, 2.0, 1.0, 1.1538461538461537, 1.0, 3.0, 1.0258354394832911, 1.0, 1.0, 1.6666666666666667, 1.1434782608695653, 1.2343362831858407, 1.2142857142857142, 1.0, 2.5, 1.5292275574112735, 10.0, 3.0, 1.0, 1.0, 4.384615384615385, 1.8195784662265109, 1.75, 2.0, 4.0, 3.0, 1.3369565217391304, 1.2125318877551021, 4.666666666666667, 1.0, 1.3235294117647058, 1.0, 1.0, 1.0, 1.0, 3.0, 1.0, 2.0, 1.0090385074525052, 3.5, 2.230769230769231, 1.0, 1.0, 1.0, 1.5546765937645417, 1.0, 4.0, 2.111111111111111, 1.3446606836744983, 1.7627118644067796, 7.857142857142857, 2.0, 1.0, 1.0, 3.0]
+origin-forest_43.39 	max: 19.1429	99th: 10.0914	95th: 4.6833	median: 1.2243	mean: 2.0365
+
+...Done, result: results.csv
+
+WORKLOAD-FINISHED | Type: QueryWorkload | Progress: 7/15 | Workload-time: 5.092711 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: DataUpdateWorkload | Progress: 8/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--model=naru', '--data_update=valueskew', '--dataset=forest', '--drift_test=distribution', '--end2end', '--update_size=25000', '--query_seed=0', '--eval_type=drift']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+GET-DATASET-PATH=./data/forest/end2end/forest.npy
+ValueSample - START
+ValueSample - END
+load_npy_dataset_from_path - df.shape = (681012, 10)
+Parsing... done, took 0.1s
+Data updated!
+Previous data size: (656012, 10), new data size: (25000, 10)
+[5.9604645e-08 0.0000000e+00 5.9604645e-08 0.0000000e+00 1.1920929e-07
+ 5.9604645e-08 0.0000000e+00 0.0000000e+00 7.6526403e-04 5.9604645e-08]
+Distance score: 7.656216621398926e-05
+SAUCE Drift detection: True
+Detection latency: 0.0914s
+
+DRIFT-DETECTED after 8-th workload
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/incremental_train.py', '--dataset=forest', '--end2end', '--model=naru', '--model_update=adapt', '--update_size=25000', '--epochs=40']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+update_size: 25000
+AdaptTask - START
+GET-DATASET-PATH=./data/forest/end2end/forest.npy
+load_npy_dataset_from_path - df.shape = (681012, 10)
+Parsing... done, took 0.1s
+done, took 0.1s
+dataset size: 681012
+train data shape: torch.Size([25000, 10]), transfer data shape:torch.Size([5000, 10])
+Epoch 0 Iter 0, train entropy gap 18.3033 bits (loss 37.373, data 19.070) 0.00400 lr
+epoch 10 train loss 23.3886 nats / 33.7425 bits
+time since start: 4.2 secs
+Epoch 10 Iter 0, train entropy gap 14.4207 bits (loss 33.491, data 19.070) 0.00341 lr
+epoch 20 train loss 22.4029 nats / 32.3206 bits
+time since start: 8.2 secs
+Epoch 20 Iter 0, train entropy gap 13.2369 bits (loss 32.307, data 19.070) 0.00200 lr
+epoch 30 train loss 22.0046 nats / 31.7459 bits
+time since start: 12.3 secs
+Epoch 30 Iter 0, train entropy gap 12.6332 bits (loss 31.703, data 19.070) 0.00059 lr
+epoch 40 train loss 21.9228 nats / 31.6278 bits
+time since start: 17.5 secs
+Training done; evaluating likelihood on full data:
+Epoch None Iter 0, test loss 42.4832 nats / 61.2903 bits
+Saved to: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+AdaptTask - END
+
+WORKLOAD-FINISHED | Type: DataUpdateWorkload | Progress: 8/15 | Workload-time: 2.367923 | Model-update-time: 21.554090
+
+
+WORKLOAD-START | Type: QueryWorkload | Progress: 9/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--dataset=forest', '--model=naru', '--end2end', '--query_seed=0', '--eval_type=estimate', '--num_workload=15', '--data_update=valueskew', '--model_update=adapt', '--random_seed=42']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+ckpts [PosixPath('/home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt')]
+Validate Argument: DATASET="forest" is valid.
+data size: 681012, total size: 681012, split index: [567510 681012]
+Parsing... done, took 0.1s
+Loading ckpt: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+query_seed:0
+origin-forest_43.39 	max: 7.0000	99th: 6.0100	95th: 5.0000	median: 1.3010	mean: 1.9386
+ReportEsts: [1.0, 1.1522504892367906, 1.0, 1.4883720930232558, 4.0, 1.0, 2.953846153846154, 1.0, 1.7608695652173914, 2.0, 1.725, 1.0450819672131149, 1.0, 1.5, 3.6216216216216215, 1.160919540229885, 3.0, 4.0, 2.44, 1.3220338983050848, 1.0, 2.7142857142857144, 1.0, 1.0, 1.042128603104213, 1.0, 2.1653543307086616, 2.0, 1.0, 2.5806451612903225, 1.3333333333333333, 6.0, 1.0, 1.0, 1.0, 2.0, 1.0, 2.0998531571218795, 5.0, 3.0, 2.0, 1.0, 1.7391304347826086, 5.0, 1.1603773584905661, 1.261061946902655, 1.0, 2.0, 1.4, 1.0, 7.0, 1.0424639056801719, 1.0, 1.0, 2.2222222222222223, 1.1271186440677967, 1.2714486638537272, 1.1176470588235294, 1.0, 1.6666666666666667, 1.6291353906032806, 2.5, 4.0, 2.0, 1.0, 2.6511627906976742, 2.096094778411584, 1.75, 2.0, 5.0, 4.0, 1.1470588235294117, 1.1521739130434783, 4.666666666666667, 1.0, 2.222614840989399, 1.0, 1.0, 1.0, 1.0, 4.0, 1.0, 1.0, 1.0502785034751319, 2.3333333333333335, 1.3846153846153846, 1.0, 1.0, 1.25, 1.279684387927072, 1.0, 6.0, 1.28, 1.4098077118730288, 1.359375, 4.583333333333333, 1.0, 1.0, 1.0, 4.0]
+origin-forest_43.39 	max: 7.0000	99th: 6.0100	95th: 5.0000	median: 1.3010	mean: 1.9386
+
+...Done, result: results.csv
+
+WORKLOAD-FINISHED | Type: QueryWorkload | Progress: 9/15 | Workload-time: 5.235339 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: DataUpdateWorkload | Progress: 10/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--model=naru', '--data_update=valueskew', '--dataset=forest', '--drift_test=distribution', '--end2end', '--update_size=25000', '--query_seed=0', '--eval_type=drift']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+GET-DATASET-PATH=./data/forest/end2end/forest.npy
+ValueSample - START
+ValueSample - END
+load_npy_dataset_from_path - df.shape = (706012, 10)
+Parsing... done, took 0.1s
+Data updated!
+Previous data size: (681012, 10), new data size: (25000, 10)
+[-2.9802322e-08  0.0000000e+00  5.9604645e-08  5.9604645e-08
+  1.7881393e-07 -2.9802322e-08  5.9604645e-08  5.9604645e-08
+  6.6012144e-04  0.0000000e+00]
+Distance score: 6.604790542041883e-05
+SAUCE Drift detection: True
+Detection latency: 0.0936s
+
+DRIFT-DETECTED after 10-th workload
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/incremental_train.py', '--dataset=forest', '--end2end', '--model=naru', '--model_update=adapt', '--update_size=25000', '--epochs=40']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+update_size: 25000
+AdaptTask - START
+GET-DATASET-PATH=./data/forest/end2end/forest.npy
+load_npy_dataset_from_path - df.shape = (706012, 10)
+Parsing... done, took 0.1s
+done, took 0.1s
+dataset size: 706012
+train data shape: torch.Size([25000, 10]), transfer data shape:torch.Size([5000, 10])
+Epoch 0 Iter 0, train entropy gap 17.9593 bits (loss 36.958, data 18.998) 0.00400 lr
+epoch 10 train loss 23.2471 nats / 33.5385 bits
+time since start: 4.4 secs
+Epoch 10 Iter 0, train entropy gap 14.3002 bits (loss 33.299, data 18.998) 0.00341 lr
+epoch 20 train loss 22.3002 nats / 32.1724 bits
+time since start: 8.4 secs
+Epoch 20 Iter 0, train entropy gap 13.2138 bits (loss 32.212, data 18.998) 0.00200 lr
+epoch 30 train loss 21.9097 nats / 31.6091 bits
+time since start: 12.8 secs
+Epoch 30 Iter 0, train entropy gap 12.4766 bits (loss 31.475, data 18.998) 0.00059 lr
+epoch 40 train loss 21.8338 nats / 31.4995 bits
+time since start: 17.9 secs
+Training done; evaluating likelihood on full data:
+Epoch None Iter 0, test loss 41.5463 nats / 59.9386 bits
+Saved to: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+AdaptTask - END
+
+WORKLOAD-FINISHED | Type: DataUpdateWorkload | Progress: 10/15 | Workload-time: 2.388206 | Model-update-time: 21.926285
+
+
+WORKLOAD-START | Type: QueryWorkload | Progress: 11/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--dataset=forest', '--model=naru', '--end2end', '--query_seed=0', '--eval_type=estimate', '--num_workload=15', '--data_update=valueskew', '--model_update=adapt', '--random_seed=42']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+ckpts [PosixPath('/home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt')]
+Validate Argument: DATASET="forest" is valid.
+data size: 706012, total size: 706012, split index: [588343 706012]
+Parsing... done, took 0.1s
+Loading ckpt: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+query_seed:0
+origin-forest_43.39 	max: 10.0000	99th: 8.0200	95th: 6.0500	median: 1.1788	mean: 2.1313
+ReportEsts: [1.0, 1.1178807947019866, 1.0, 1.2264150943396226, 8.0, 1.0, 1.170731707317073, 1.0, 1.0116279069767442, 2.0, 1.0246913580246915, 1.0332681017612524, 1.0, 1.5, 2.161290322580645, 1.118279569892473, 1.0, 5.0, 1.4, 1.2345679012345678, 1.0, 1.75, 1.0, 1.0, 1.1868932038834952, 1.0, 2.0567375886524824, 4.0, 4.0, 1.9722222222222223, 1.0, 8.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.5741176470588236, 6.0, 3.0, 2.0, 1.0, 1.75, 6.0, 1.0884955752212389, 1.6610169491525424, 1.0, 2.0, 1.3333333333333333, 1.0, 8.0, 2.6, 1.0, 1.0, 5.0, 1.2685950413223142, 1.192613817255651, 1.5294117647058822, 1.0, 1.6666666666666667, 1.4929936305732483, 10.0, 5.0, 1.0, 1.0, 1.9008264462809918, 6.0, 1.0, 4.225, 1.0, 1.0, 1.1481481481481481, 1.3002503313208658, 1.5441176470588236, 1.0, 1.7815699658703072, 1.0, 1.0, 1.0, 1.0, 5.0, 1.0, 2.0, 1.0602967283794065, 7.0, 6.0, 1.1527777777777777, 1.4109589041095891, 1.0, 1.0, 1.3096500530222694, 1.0, 1.0, 1.0007868528135608, 6.0, 1.1503001200480192, 1.0, 4.0, 2.0, 1.0280701754385966]
+origin-forest_43.39 	max: 10.0000	99th: 8.0200	95th: 6.0500	median: 1.1788	mean: 2.1313
+
+...Done, result: results.csv
+
+WORKLOAD-FINISHED | Type: QueryWorkload | Progress: 11/15 | Workload-time: 5.208432 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: DataUpdateWorkload | Progress: 12/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--model=naru', '--data_update=valueskew', '--dataset=forest', '--drift_test=distribution', '--end2end', '--update_size=25000', '--query_seed=0', '--eval_type=drift']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+GET-DATASET-PATH=./data/forest/end2end/forest.npy
+ValueSample - START
+ValueSample - END
+load_npy_dataset_from_path - df.shape = (731012, 10)
+Parsing... done, took 0.1s
+Data updated!
+Previous data size: (706012, 10), new data size: (25000, 10)
+[5.9604645e-08 0.0000000e+00 0.0000000e+00 5.9604645e-08 1.1920929e-07
+ 0.0000000e+00 0.0000000e+00 5.9604645e-08 5.9211254e-04 0.0000000e+00]
+Distance score: 5.9241057897452265e-05
+SAUCE Drift detection: True
+Detection latency: 0.0981s
+
+DRIFT-DETECTED after 12-th workload
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/incremental_train.py', '--dataset=forest', '--end2end', '--model=naru', '--model_update=adapt', '--update_size=25000', '--epochs=40']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+update_size: 25000
+AdaptTask - START
+GET-DATASET-PATH=./data/forest/end2end/forest.npy
+load_npy_dataset_from_path - df.shape = (731012, 10)
+Parsing... done, took 0.1s
+done, took 0.1s
+dataset size: 731012
+train data shape: torch.Size([25000, 10]), transfer data shape:torch.Size([5000, 10])
+Epoch 0 Iter 0, train entropy gap 17.9821 bits (loss 36.905, data 18.923) 0.00400 lr
+epoch 10 train loss 23.2346 nats / 33.5204 bits
+time since start: 4.4 secs
+Epoch 10 Iter 0, train entropy gap 14.5163 bits (loss 33.439, data 18.923) 0.00341 lr
+epoch 20 train loss 22.3072 nats / 32.1825 bits
+time since start: 8.4 secs
+Epoch 20 Iter 0, train entropy gap 13.3078 bits (loss 32.230, data 18.923) 0.00200 lr
+epoch 30 train loss 21.9374 nats / 31.6489 bits
+time since start: 12.7 secs
+Epoch 30 Iter 0, train entropy gap 12.6806 bits (loss 31.603, data 18.923) 0.00059 lr
+epoch 40 train loss 21.8570 nats / 31.5330 bits
+time since start: 17.8 secs
+Training done; evaluating likelihood on full data:
+Epoch None Iter 0, test loss 40.9333 nats / 59.0543 bits
+Saved to: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+AdaptTask - END
+
+WORKLOAD-FINISHED | Type: DataUpdateWorkload | Progress: 12/15 | Workload-time: 2.391448 | Model-update-time: 21.799884
+
+
+WORKLOAD-START | Type: QueryWorkload | Progress: 13/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--dataset=forest', '--model=naru', '--end2end', '--query_seed=0', '--eval_type=estimate', '--num_workload=15', '--data_update=valueskew', '--model_update=adapt', '--random_seed=42']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+ckpts [PosixPath('/home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt')]
+Validate Argument: DATASET="forest" is valid.
+data size: 731012, total size: 731012, split index: [609176 731012]
+Parsing... done, took 0.1s
+Loading ckpt: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+query_seed:0
+origin-forest_43.39 	max: 10.0000	99th: 7.0300	95th: 7.0000	median: 1.1716	mean: 2.0568
+ReportEsts: [1.0, 1.1011523687580025, 1.0, 1.7105263157894737, 4.0, 1.0, 1.8823529411764706, 1.0, 1.0582959641255605, 1.0, 1.0617283950617284, 1.149812734082397, 1.0, 1.5, 3.8285714285714287, 1.1145833333333333, 2.0, 6.0, 1.625, 2.841530054644809, 1.0, 1.7924528301886793, 1.0, 1.0, 1.1571753986332574, 1.0, 2.6608695652173915, 4.0, 5.2, 2.951219512195122, 1.3333333333333333, 10.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.3463796477495107, 7.0, 2.0, 2.0, 1.0, 1.48, 7.0, 1.0423728813559323, 1.2784810126582278, 1.0, 2.0, 1.2222222222222223, 1.0, 4.5, 1.1666666666666667, 1.0, 1.0, 1.875, 1.5120967741935485, 1.0007745933384973, 1.1764705882352942, 1.0, 1.2, 1.4530126456731962, 1.25, 7.0, 1.0, 1.1993006993006994, 1.7352941176470589, 7.0, 1.0, 3.5697674418604652, 1.0, 1.0, 1.119047619047619, 1.0866175219733485, 2.0, 1.0, 1.1821192052980132, 1.0, 1.0, 1.0, 1.0, 7.0, 2.8333333333333335, 1.0, 1.0082143409325546, 3.6, 1.029432589874803, 7.0, 1.4807692307692308, 1.6075949367088607, 1.0, 1.0, 1.188642925890279, 1.0, 1.0, 1.0028857837181044, 7.0, 1.0502325581395349, 1.0, 4.0, 1.5161290322580645]
+origin-forest_43.39 	max: 10.0000	99th: 7.0300	95th: 7.0000	median: 1.1716	mean: 2.0568
+
+...Done, result: results.csv
+
+WORKLOAD-FINISHED | Type: QueryWorkload | Progress: 13/15 | Workload-time: 5.266679 | Model-update-time: 0.000000
+
+
+WORKLOAD-START | Type: DataUpdateWorkload | Progress: 14/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--model=naru', '--data_update=valueskew', '--dataset=forest', '--drift_test=distribution', '--end2end', '--update_size=25000', '--query_seed=0', '--eval_type=drift']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+GET-DATASET-PATH=./data/forest/end2end/forest.npy
+ValueSample - START
+ValueSample - END
+load_npy_dataset_from_path - df.shape = (756012, 10)
+Parsing... done, took 0.1s
+Data updated!
+Previous data size: (731012, 10), new data size: (25000, 10)
+[ 5.9604645e-08  0.0000000e+00  0.0000000e+00  0.0000000e+00
+  2.3841858e-07  5.9604645e-08 -2.9802322e-08 -2.9802322e-08
+  5.0902367e-04  0.0000000e+00]
+Distance score: 5.093216896057129e-05
+SAUCE Drift detection: True
+Detection latency: 0.1014s
+
+DRIFT-DETECTED after 14-th workload
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/incremental_train.py', '--dataset=forest', '--end2end', '--model=naru', '--model_update=adapt', '--update_size=25000', '--epochs=40']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+update_size: 25000
+AdaptTask - START
+GET-DATASET-PATH=./data/forest/end2end/forest.npy
+load_npy_dataset_from_path - df.shape = (756012, 10)
+Parsing... done, took 0.1s
+done, took 0.1s
+dataset size: 756012
+train data shape: torch.Size([25000, 10]), transfer data shape:torch.Size([5000, 10])
+Epoch 0 Iter 0, train entropy gap 17.9157 bits (loss 36.760, data 18.844) 0.00400 lr
+epoch 10 train loss 23.1217 nats / 33.3575 bits
+time since start: 4.2 secs
+Epoch 10 Iter 0, train entropy gap 14.4607 bits (loss 33.305, data 18.844) 0.00341 lr
+epoch 20 train loss 22.2110 nats / 32.0436 bits
+time since start: 8.2 secs
+Epoch 20 Iter 0, train entropy gap 13.1494 bits (loss 31.994, data 18.844) 0.00200 lr
+epoch 30 train loss 21.8366 nats / 31.5036 bits
+time since start: 12.1 secs
+Epoch 30 Iter 0, train entropy gap 12.6159 bits (loss 31.460, data 18.844) 0.00059 lr
+epoch 40 train loss 21.7682 nats / 31.4048 bits
+time since start: 16.1 secs
+Training done; evaluating likelihood on full data:
+Epoch None Iter 0, test loss 40.3300 nats / 58.1839 bits
+Saved to: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+AdaptTask - END
+
+WORKLOAD-FINISHED | Type: DataUpdateWorkload | Progress: 14/15 | Workload-time: 2.417506 | Model-update-time: 20.154397
+
+
+WORKLOAD-START | Type: QueryWorkload | Progress: 15/15
+Going to run: ['python', '/home/kangping/code_copy/SAUCE/Naru/eval_model.py', '--dataset=forest', '--model=naru', '--end2end', '--query_seed=0', '--eval_type=estimate', '--num_workload=15', '--data_update=valueskew', '--model_update=adapt', '--random_seed=42']
+Torch device: cuda:1
+GET-MODEL-PATH=./models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+ckpts [PosixPath('/home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt')]
+Validate Argument: DATASET="forest" is valid.
+data size: 756012, total size: 756012, split index: [630010 756012]
+Parsing... done, took 0.1s
+Loading ckpt: /home/kangping/code_copy/SAUCE/models/end2end/naru/origin-forest-16.5MB-model62.533-data19.148-200epochs-seed0.pt
+query_seed:0
+origin-forest_43.39 	max: 20.0000	99th: 12.0800	95th: 8.0000	median: 1.2032	mean: 2.6386
+ReportEsts: [1.0, 1.2403339191564147, 1.0, 1.1818181818181819, 2.6666666666666665, 1.0, 2.355828220858896, 1.0, 1.2588555858310626, 1.0, 1.1797752808988764, 1.1454219030520647, 1.0, 2.0, 4.962962962962963, 1.1956521739130435, 1.0, 7.0, 1.1754385964912282, 1.072538860103627, 1.0, 1.8571428571428572, 1.0, 1.0, 1.0456349206349207, 1.0, 3.0865384615384617, 4.0, 7.0, 1.7608695652173914, 1.4029170464904284, 12.0, 1.0, 1.0, 1.0, 2.0, 1.0, 1.417922948073702, 8.0, 6.0, 2.0, 1.0, 1.3076923076923077, 9.0, 1.048780487804878, 1.5219512195121951, 1.0, 2.0, 2.1666666666666665, 1.0, 5.0, 1.764766201804758, 1.0, 1.0, 2.3966101694915256, 1.371308016877637, 1.0210800335244097, 5.0, 8.0, 1.25, 1.3906027527289986, 1.1111111111111112, 10.0, 1.0, 1.0042372881355932, 1.2107438016528926, 8.0, 1.0, 4.010869565217392, 1.0, 1.0, 1.1153846153846154, 1.2127921279212792, 2.9166666666666665, 1.0, 1.5691318327974277, 7.0, 1.0, 1.0, 1.0, 8.0, 1.5454545454545454, 1.0, 1.016211370005291, 3.2, 1.0041223321510795, 8.0, 1.64, 2.236842105263158, 1.0, 1.0, 1.1720974375197721, 1.0, 1.0, 1.048853483561463, 8.0, 1.1852436823104693, 8.0, 1.4156626506024097, 20.0]
+origin-forest_43.39 	max: 20.0000	99th: 12.0800	95th: 8.0000	median: 1.2032	mean: 2.6386
+
+...Done, result: results.csv
+
+WORKLOAD-FINISHED | Type: QueryWorkload | Progress: 15/15 | Workload-time: 5.279398 | Model-update-time: 0.000000
+
+
+Experiment Summary: #data-update-times=7, #drift=7 | total-time=205.173325
