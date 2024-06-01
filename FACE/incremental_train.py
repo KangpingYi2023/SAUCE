@@ -650,7 +650,7 @@ def Update(
             since_start = time.time() - train_start
             print("time since start: {:.1f} secs".format(since_start))
 
-            check_point_path = "./FACE/checkpoints/update__epoch_{}.pt".format(epoch)
+            check_point_path = "./models/checkpoints/update__epoch_{}.pt".format(epoch)
             absolute_checkpoint_path = get_absolute_path(check_point_path)
             torch.save(model.state_dict(), absolute_checkpoint_path)
         train_losses.append(mean_epoch_train_loss)

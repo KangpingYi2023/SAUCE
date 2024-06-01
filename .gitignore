@@ -1,6 +1,7 @@
 .idea/*
 *.pyc
 Naru/checkpoints/
+FACE/checkpoints/
 *-sample*.npy
 *power.npy
 FACE/evaluate/oracle/*
