@@ -44,7 +44,6 @@ class ModelAdapter(nn.Module):
         return x1 @ x2.transpose(0, 1)
 
 
-# 定义一个简单的模型
 class SimpleModel(nn.Module):
     def __init__(self):
         super(SimpleModel, self).__init__()
@@ -54,7 +53,6 @@ class SimpleModel(nn.Module):
         return self.fc(x)
 
 
-# 定义MAML算法
 class MAML:
     def __init__(self, model, lr_inner=0.01, lr_outer=0.001):
         self.model = model
@@ -66,7 +64,6 @@ class MAML:
         # model_copy = copy.deepcopy(model)
         inner_optimizer = optim.SGD(self.model.parameters(), lr=self.lr_inner)
 
-        # 内循环（在任务数据上进行梯度更新）
         for x, y in task_data:
             y_pred = self.model(x)
             loss = nn.MSELoss()(y_pred, y)
@@ -74,34 +71,26 @@ class MAML:
             loss.backward()
             inner_optimizer.step()
 
-        # 返回内循环后的模型参数
         return self.model.state_dict()
 
     def meta_update(self, tasks):
         # meta_grads = []
 
-        # 外循环（在多个任务上进行元梯度更新）
         for task_data in tasks:
-            # 备份模型当前状态
             original_state = {
                 name: param.clone() for name, param in self.model.named_parameters()
             }
 
-            # 在任务上进行内循环，获取内循环后的模型参数
             inner_params = self.inner_update(task_data, model)
 
-            # model_copy = self.inner_update(task_data, self.model)
-            # 应用内循环后的参数进行外循环损失计算
             outer_loss = 0
             for x, y in task_data:
                 y_pred = self.model(x)
                 outer_loss += nn.MSELoss()(y_pred, y)
 
-            # 计算外梯度
             self.optimizer.zero_grad()
             outer_loss.backward()
 
-            # 计算元梯度并更新模型参数
             meta_grad = {
                 name: param.grad for name, param in self.model.named_parameters()
             }
@@ -110,24 +99,18 @@ class MAML:
 
 
 if __name__ == "__main__":
-    # 示例用法
-    # 创建模型和元学习器
     model = SimpleModel()
     maml = MAML(model)
 
-    # 定义多个任务数据集
     tasks = [
         [(torch.tensor([1.0]), torch.tensor([2.0]))],
         [(torch.tensor([2.0]), torch.tensor([4.0]))],
         [(torch.tensor([4.0]), torch.tensor([8.0]))],
-        # 可以添加更多的任务
     ]
 
-    # 进行元学习
-    for epoch in range(1000):  # 假设进行1000个元训练周期
+    for epoch in range(1000):  
         maml.meta_update(tasks)
 
-    # 使用元学习后的模型进行预测
     new_data = torch.tensor([3.0])
     prediction = model(new_data)
-    print("预测结果:", prediction.item())
+    print("prediction results:", prediction.item())

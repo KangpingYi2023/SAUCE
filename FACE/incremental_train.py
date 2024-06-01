@@ -100,7 +100,6 @@ class data_prefetcher():
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
 
-    # 添加通用参数
     common_args: List[ArgType] = [
         ArgType.DATASET,
         ArgType.END2END,
@@ -145,9 +144,8 @@ def TransferDataPrepare(train_data, split_indices: List[int]):
     transfer_data = copy.deepcopy(train_data)
     tuples1 = transfer_data.tuples[: -args.update_size]
     rndindices = torch.randperm(len(tuples1))[:old_size]
-    transfer_data.tuples = tuples1[rndindices]  # 从原始数据中随机抽取样本放进迁移数据集
+    transfer_data.tuples = tuples1[rndindices]  
 
-    # 从更新数据切片中抽样数据放进迁移数据集
     tuples1 = train_data.tuples[-args.update_size :]
     rndindices = torch.randperm(len(tuples1))[:new_size]
     transfer_data.tuples = torch.cat([transfer_data.tuples, tuples1[rndindices]], dim=0)
@@ -329,7 +327,6 @@ def RunRetrainEpoch(
         # pmtrbhat = pmodel(trb)
 
         if num_orders_to_forward == 1:
-            # face模型的loss
             nll1 = model.log_prob(xb)
             nll2 = model.log_prob(trb)
             nll3 = pmodel.log_prob(trb)
@@ -389,9 +386,8 @@ def NewTransferDataPrepare(train_data):
     transfer_data = copy.deepcopy(train_data)
     tuples1 = transfer_data[: -args.update_size]
     rndindices = torch.randperm(len(tuples1))[:old_size]
-    transfer_data = tuples1[rndindices]  # 从原始数据中随机抽取样本放进迁移数据集
+    transfer_data = tuples1[rndindices]  
 
-    # 从更新数据切片中抽样数据放进迁移数据集
     tuples1 = train_data[-args.update_size :]
     rndindices = torch.randperm(len(tuples1))[:new_size]
     transfer_data = np.vstack((transfer_data, tuples1[rndindices]))
@@ -403,7 +399,7 @@ def Adapt(
 ):
     st_time = time.time()
 
-    # 准备model
+
     model_config_path = f"./FACE/config/{args.dataset}.yaml"
     abs_model_config_path = get_absolute_path(model_config_path)
     my_flow_model = MyFlowModel(config_path=abs_model_config_path)
@@ -413,11 +409,10 @@ def Adapt(
     model_size = ReportModel(model)
 
     if freeze:
-        # TODO: 添加参数冻结机制
+        # TODO: parameter freezing
         pass
     mb = ReportModel(model)
 
-    # 准备数据集
     if not args.end2end:
         path = END2END_PATH
         raw_dataset = FaceDataset(path=path, dataset=args.dataset)
@@ -477,7 +472,6 @@ def Adapt(
             xb = xb.to(DEVICE).to(torch.float32)
             trb = trb.to(DEVICE).to(torch.float32)
 
-            # face模型的loss
             nll1 = model.log_prob(xb)
             nll2 = model.log_prob(trb)
             nll3 = pmodel.log_prob(trb)
@@ -546,11 +540,9 @@ def Adapt(
 def Update(
     prev_model_path: Path, new_model_path: Path, end2end: bool, freeze: bool = False
 ):
-    # TODO: 完成该函数
     torch.manual_seed(0)
     np.random.seed(0)
 
-    # 读取数据集
     if not args.end2end:
         path = END2END_PATH
         raw_dataset = FaceDataset(path=path, dataset=args.dataset)
@@ -562,7 +554,8 @@ def Update(
 
     # print("data info: {}".format(table.data.info())
     # print("split index: {}".format(split_indices))
-    # 准备dataset
+    
+    # prepare dataset
     # train_data=raw_data[:-args.update_size]
     # train_data=copy.deepcopy(raw_dataset.data[-args.update_size:])
     train_data=copy.deepcopy(raw_dataset.data[-args.update_size:])
@@ -580,9 +573,7 @@ def Update(
         )
     )
 
-    # TODO: table_bits?
 
-    # 准备model
     model_config_path = f"./FACE/config/{args.dataset}.yaml"
     abs_model_config_path = get_absolute_path(model_config_path)
     my_flow_model = MyFlowModel(config_path=abs_model_config_path)
@@ -590,7 +581,6 @@ def Update(
     pmodel = my_flow_model.load_model(device=DEVICE, model_path=prev_model_path)
     pmodel.eval()
     if freeze:
-        # TODO: 添加参数冻结机制
         pass
     mb = ReportModel(model)
 
@@ -598,7 +588,6 @@ def Update(
         print("Applying InitWeight()")
         model.apply(InitWeight)
 
-    # 准备opt和其它参数
     lr=lr_bjaq
     opt = torch.optim.Adam(model.parameters(), lr=lr)
     bs = 4000 if args.dataset=="bjaq" else 8000
@@ -682,13 +671,11 @@ def Update(
     torch.cuda.empty_cache()
 
 def FineTune(prev_model_path: Path, new_model_path: Path, end2end: bool):
-    # TODO: 完成该函数
     # print("FineTune not implemented")
     # pass
 
     st_time = time.time()
 
-    # 准备model
     model_config_path = f"./FACE/config/{args.dataset}.yaml"
     abs_model_config_path = get_absolute_path(model_config_path)
     my_flow_model = MyFlowModel(config_path=abs_model_config_path)
@@ -697,7 +684,7 @@ def FineTune(prev_model_path: Path, new_model_path: Path, end2end: bool):
 
     mb = ReportModel(model)
 
-    # 准备数据集
+    # prepare datasets
     if not args.end2end:
         path = END2END_PATH
         raw_dataset = FaceDataset(path=path, dataset=args.dataset)
@@ -752,7 +739,7 @@ def FineTune(prev_model_path: Path, new_model_path: Path, end2end: bool):
 
             num_orders_to_forward = 1
             if num_orders_to_forward == 1:
-                # face模型的loss
+                # loss function of face
                 nll1 = model.log_prob(xb)
                 loss = -torch.mean(nll1)               
 
@@ -798,13 +785,11 @@ def FineTune(prev_model_path: Path, new_model_path: Path, end2end: bool):
         save_torch_model(model, new_model_path)
 
 def main():
-    # >>> 解析参数
     args: argparse.Namespace = parse_args()
     end2end: bool = args.end2end
     model_update: str = args.model_update
 
-    # >>> 获取模型路径
-    # 普通模式
+    # model path
     if not end2end:
         if args.dataset=="bjaq":
             origin_model_path: str = "./models/face-origin-bjaq-id2-best-val.t"
@@ -819,24 +804,23 @@ def main():
         # FineTune(prev_model_path=prev_model_path, new_model_path=new_model_path, end2end=end2end)
         # Adapt(prev_model_path=prev_model_path, new_model_path=new_model_path, end2end=end2end)
 
-    # end2end模式
+    # end2end
     else:
         prev_model_path: Path = (
             communicator.ModelPathCommunicator().get()
-        )  # 从communicator获取模型路径
-        new_model_path: Path = prev_model_path  # 保存在原模型的路径下（整个end2end中更新同1个模型）
+        )  
+        new_model_path: Path = prev_model_path 
 
-        # 获取更新数据池并判断其尺寸
+        # data pool
         pool_path=f"./data/{args.dataset}/end2end/{args.dataset}_pool.npy"
         unlearned_data=np.load(pool_path)
         update_size=unlearned_data.shape[0]
         args.update_size=update_size
         print(f"update_size: {update_size}")
 
-        # 学习之后删除文件
+        # remove after model update
         os.remove(pool_path)
 
-        # >>> 模型更新
         if model_update == "update":
             print("UpdateTask - START")
             Update(

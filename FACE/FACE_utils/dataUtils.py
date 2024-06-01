@@ -38,13 +38,11 @@ def LoadTable(
     dataset_name: str, is_end2end: bool = False
 ) -> tuple[DataFrame, Any, Any]:
     """
-    读取npy数据，返回DataFrame
+    npy->Dataframe
     """
-    # 原逻辑
     if not is_end2end:
         path = f"./data/{dataset_name}/end2end/{dataset_name}.npy"
 
-    # end2end模式下：从communicator中获取数据集路径
     else:
         path = communicator.DatasetPathCommunicator().get()
 

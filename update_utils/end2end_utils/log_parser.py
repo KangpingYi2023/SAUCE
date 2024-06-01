@@ -25,17 +25,10 @@ def parse_lines_with_keywords(src_path: Path, dst_path: Path, start_words: List[
 def parse_experiment_records(
     src_dir: str,
     dst_dir: str,
-    start_words: List[str] = None,  # 以此开头的行会被写入
-    var_names: List[str] = None,  # 待求和的标量
-    list_names: List[str] = None,  # 待统计的数组变量
+    start_words: List[str] = None,  
+    var_names: List[str] = None,  
+    list_names: List[str] = None,  #
 ):
-    """
-    整理src_dir下的所有txt实验记录，输出到dst_dir下
-
-    使用：
-        若需要重新生成：直接删除dst_dir，再次运行本函数
-    """
-    # 赋默认值
     if start_words is None:
         start_words = [
             "Input arguments",
@@ -53,7 +46,6 @@ def parse_experiment_records(
     src_dir_path = path_util.get_absolute_path(src_dir)
     dst_dir_path = path_util.get_absolute_path(dst_dir)
 
-    # 确保目标文件夹存在
     dst_dir_path.mkdir(parents=True, exist_ok=True)
 
     
@@ -71,11 +63,9 @@ def parse_experiment_records(
     errs=err_dict_init()
     err_labels=err_dict_init()
 
-    # 处理源文件夹下的每个文件
     for src_file_path in src_dir_path.glob("*.txt"):
         dst_file_path = dst_dir_path / src_file_path.name
 
-        # 跳过已处理的文件
         if dst_file_path.exists():
             continue
         
@@ -86,19 +76,16 @@ def parse_experiment_records(
         model_update_type=group[2]
         update_type=group[3]
 
-        # 提取关键行并写入
         parse_lines_with_keywords(src_file_path, dst_file_path, start_words)
 
         # log_util.append_to_file(dst_file_path, "\n")
 
-        # 统计求和变量
         for var_name in var_names:
             var_sum = sum_float_var_in_log(dst_file_path, var_name=var_name)
             log_util.append_to_file(
                 dst_file_path, f"Sum of {var_name} = {var_sum:.4f}\n"
             )
 
-        # 统计数组变量
         for list_name in list_names:
             concat_list, match_cnt = concat_list_var_in_log(
                 dst_file_path, list_name=list_name
@@ -147,7 +134,6 @@ def parse_experiment_records(
                 # err_labels[dataset][update_type][model].append(f"{model_update_type} 1st")
                 err_labels[dataset][update_type][model].append(f"{model_update_type} 2nd-to-end")
 
-                #画图
                 # figure_name=dst_file_path.name.rstrip(".txt")
                 # plot_box(first_query_errs, after_query_errs, plot_labels=["1st", "2nd-to-end"], file_name=figure_name)
         

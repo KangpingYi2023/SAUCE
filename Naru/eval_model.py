@@ -45,7 +45,7 @@ DEVICE = get_torch_device()
 def create_parser():
     parser = argparse.ArgumentParser()
 
-    # 添加通用参数
+    # global paramaters
     common_args: List[ArgType] = [
         ArgType.DATA_UPDATE,
         ArgType.DATASET,
@@ -376,9 +376,9 @@ def GenerateQuery(
         elif args.dataset == "forest":
             num_filters = rng.randint(3, 9)
         elif args.dataset == "bjaq":
-            num_filters = rng.randint(2, 4)  # TODO: 设置更合理的值
+            num_filters = rng.randint(2, 4)  
         elif args.dataset == "power":
-            num_filters = rng.randint(3, 6)  # TODO: 设置更合理的值
+            num_filters = rng.randint(3, 6)  
         else:
             return
         cols, ops, vals = SampleTupleThenRandom(
@@ -570,13 +570,13 @@ def ReportEsts(estimators: list) -> list:
         current_datetime = datetime.now(pytz.timezone("Asia/Shanghai"))
         formatted_datetime = current_datetime.strftime(
             "%y%m%d-%H%M%S"
-        )  # 格式化日期和时间为 'yyMMdd-HHMMSS' 格式
+        )  
         output_file_name = (
-            f"{args.model}+"  # 模型
-            f"{args.dataset}+"  # 数据集
-            # f"{args.data_update}+"  # 数据更新方式(single/permute/sample)
-            f"qseed{args.query_seed}+"  # query的随机种子
-            f"t{formatted_datetime}"  # 实验时间
+            f"{args.model}+"  
+            f"{args.dataset}+"  
+            # f"{args.data_update}+"  
+            f"qseed{args.query_seed}+"  
+            f"t{formatted_datetime}"  
             f".txt"
         )
         output_file_path=f"./end2end/model-evaluation/{output_file_name}"
@@ -597,13 +597,13 @@ def ReportEsts(estimators: list) -> list:
 
             random_seed=JsonCommunicator().get(f"random_seed")
             log_file_name=(
-                f"{args.model}+"  # 模型
-                f"{args.dataset}+"  # 数据集
+                f"{args.model}+"  
+                f"{args.dataset}+"  
                 f"num_workloads{args.num_workload}+"
-                f"{args.data_update}+"  # 数据更新方式
-                f"{args.model_update}+" # 模型更新方式
-                f"qseed{args.query_seed}+"  # query的随机种子
-                f"rseed{random_seed}" # update的随机种子
+                f"{args.data_update}+"  
+                f"{args.model_update}+" 
+                f"qseed{args.query_seed}+"  
+                f"rseed{random_seed}" 
                 f".txt"
             )
             log_file_path=f"./end2end/end2end-evaluations/{log_file_name}"
@@ -861,7 +861,7 @@ def ReportModel(model, blacklist=None):
 
 def SaveEstimators(path, estimators, return_df=False):
     # name, query_dur_ms, errs, est_cards, true_cards
-    results_list = []  # 创建一个空列表来存储所有 DataFrame
+    results_list = []  
 
     for est in estimators:
         data = {
@@ -871,9 +871,9 @@ def SaveEstimators(path, estimators, return_df=False):
             "true_card": est.true_cards,
             "query_dur_ms": est.query_dur_ms,
         }
-        results_list.append(pd.DataFrame(data))  # 将新的 DataFrame 添加到列表中
+        results_list.append(pd.DataFrame(data))  
 
-    results = pd.concat(results_list, ignore_index=True)  # 使用 concat 合并所有 DataFrame
+    results = pd.concat(results_list, ignore_index=True)  
 
     if return_df:
         return results
@@ -892,12 +892,7 @@ def LoadOracleCardinalities():
 
 
 def Model_Eval(args, end2end: bool = False):
-    """
-    查询负载
-    """
-    # 获取模型路径
     if not end2end:
-        # 原逻辑
         relative_model_paths = "./models/*{}*MB-model*-data*-*epochs-seed*.pt".format(
             args.dataset
         )
@@ -906,7 +901,7 @@ def Model_Eval(args, end2end: bool = False):
         if args.blacklist:
             all_ckpts = [ckpt for ckpt in all_ckpts if args.blacklist not in ckpt]
     else:
-        # end2end模式
+        # end2end mode
         all_ckpts = [communicator.ModelPathCommunicator().get()]
 
     selected_ckpts = all_ckpts
@@ -1030,12 +1025,11 @@ def Model_Eval(args, end2end: bool = False):
         random_seed = args.query_seed
         print(f"query_seed:{random_seed}")
         """
-        # end2end模式下，随机种子值需要变化
         if end2end:
             random_seed = (
                 communicator.RandomSeedCommunicator().get()
-            )  # 从文件读取random_seed
-            communicator.RandomSeedCommunicator().update()  # 更新random_seed
+            )  
+            communicator.RandomSeedCommunicator().update()  
         """
         if len(estimators):
             RunN(
@@ -1375,18 +1369,13 @@ def test_for_drift(
     sample_size=500,
     data_type="raw",
 ):
-    """
-    TODO: 如需要支持FACE，则args.drift_test == "ddup"时的逻辑可能需要修改
-    数据更新 + 漂移检测
-    bootstrap, sample_size不用改
-    """
     torch.manual_seed(0)
     np.random.seed(0)
 
     def offline_phase(table, model, table_bits, simulations, sample_size):
         t1 = time.time()
         train_data = common.TableDataset(table)
-        train_data.tuples = train_data.tuples[: -args.update_size]  # 去掉末尾的update数据
+        train_data.tuples = train_data.tuples[: -args.update_size]  
 
         avg_ll = []
         std_ll=[]
@@ -1430,7 +1419,7 @@ def test_for_drift(
         t1 = time.time()
         train_data = common.TableDataset(table)
 
-        train_data.tuples = train_data.tuples[ -args.update_size : ]  # 取出更新部分
+        train_data.tuples = train_data.tuples[ -args.update_size : ]  
         # idx = rndindices = torch.randperm(len(train_data.tuples))[:5000]
         idx = rndindices = torch.randperm(len(train_data.tuples))[:sample_size]
 
@@ -1484,12 +1473,8 @@ def test_for_drift(
             return False, t2 - t1
 
     def data_update():
-        """
-        数据更新
-        """
         raw_data, sampled_data = None, None
         if not end2end:
-            # 原逻辑：permute
             is_raw: bool = data_type == "raw"
             table, _ = dataset_util.DatasetLoader.load_permuted_dataset(
                 dataset=args.dataset, permute=is_raw
@@ -1497,32 +1482,21 @@ def test_for_drift(
             data_path=""
 
         else:
-            # end2end模式：permute, single, sample三选一
-            # 获取数据集路径
             abs_dataset_path = communicator.DatasetPathCommunicator().get()
 
             random_seed=JsonCommunicator().get(f"random_seed")
-            # 更新数据集
             (
                 raw_data,
                 sampled_data,
             ) = data_updater.DataUpdater.update_dataset_from_file_to_file(
                 data_update_method=args.data_update,
-                update_fraction=0.2,  # TODO: 每次更新的比例
-                update_size=args.update_size,  # TODO: 每次更新的数量的绝对值
+                update_fraction=0.2,  
+                update_size=args.update_size,  
                 raw_dataset_path=abs_dataset_path,
                 updated_dataset_path=abs_dataset_path,
                 random_seed=random_seed,
-                # random_seed=1226,
-                # random_seed=args.query_seed,
-                # random_seed=8,
-                # random_seed=6,  #dataset=bjaq, model=face, data_update=tupleskew
-                # random_seed=48, #dataset=bjaq, model=transformer, data_update=valueskew 
-                # random_seed=7, #dataset=forest, model=transformer, data_update=valueskew 
-                # random_seed=6, #dataset=census, model=transformer, data_update=valueskew
             )
 
-            # 读取并保存更新后的数据
             table = dataset_util.NpyDatasetLoader.load_npy_dataset_from_path(
                 path=abs_dataset_path
             )
@@ -1572,7 +1546,6 @@ def test_for_drift(
 
             # print(table.data.info())
 
-            # TODO: 读取face模型并计算相应的loss
             if args.model == "naru":
                 model = MakeMade(
                     scale=args.fc_hiddens,
@@ -1669,7 +1642,7 @@ def test_for_drift(
     if os.path.isfile(pool_path):
         unlearned_data=np.load(pool_path).astype(np.float32)
         unlearned_size=unlearned_data.shape[0]
-        previous_data=raw_data[:-unlearned_size] #取出已被学习的部分
+        previous_data=raw_data[:-unlearned_size]
         new_data=np.vstack((unlearned_data,sampled_data))
     else:
         previous_data=raw_data
@@ -1691,21 +1664,18 @@ def test_for_drift(
         detection_type="None"
     print(f"{detection_type} Drift detection: {is_drift}")
     print("Detection latency: {:.4f}s".format(time_overhead))
-    communicator.DriftCommunicator().set(is_drift=is_drift)  # 将结果写入txt文件
+    communicator.DriftCommunicator().set(is_drift=is_drift)  
 
     
 
 def main():
-    # 是否运行end2end实验
     is_end2end: bool = args.end2end
 
     # query workload
     if args.eval_type == "estimate" or args.eval_type == "first_estimate":
         Model_Eval(args=args, end2end=is_end2end)
 
-    # data-update workload: 数据更新 + 漂移检测
     if args.eval_type == "drift":
-        # 原逻辑：处理所有模型
         if not is_end2end:
             relative_model_paths = (
                 "./models/origin-{}*MB-model*-data*-*epochs-seed*.pt".format(
@@ -1714,12 +1684,10 @@ def main():
             )
             absolute_model_paths = get_absolute_path(relative_model_paths)
             model_paths_str: List[str] = glob.glob(str(absolute_model_paths))
-            model_paths: List[Path] = [Path(i) for i in model_paths_str]  # 转为List[Path]
+            model_paths: List[Path] = [Path(i) for i in model_paths_str] 
             print("Count of model paths =", len(model_paths))
 
-        # end2end: 仅处理1个模型
         else:
-            # 通过communicator获取模型路径
             model_paths: List[Path] = [communicator.ModelPathCommunicator().get()]
 
         for model_path in model_paths:

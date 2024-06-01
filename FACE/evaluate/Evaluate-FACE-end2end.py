@@ -36,7 +36,7 @@ from torchquad import set_up_backend
 
 sys.path.append("./")
 from FACE.data.table_sample import MyFlowModel
-# 支持end2end的包
+
 from update_utils import log_util
 from update_utils.arg_util import ArgType, add_common_arguments
 from update_utils.end2end_utils import communicator
@@ -82,10 +82,8 @@ flow_id = 2
 
 
 def create_parser():
-    """创建参数解析器"""
     parser = argparse.ArgumentParser()
 
-    # 添加通用参数
     common_args: List[ArgType] = [
         ArgType.DATASET,
         ArgType.END2END,
@@ -107,7 +105,6 @@ def create_parser():
     return parser
 
 
-# 提取参数
 args = create_parser().parse_args()
 
 """ query settings"""
@@ -208,9 +205,7 @@ print("DEVICE NAME\n", DEVICENAME)
 model_name = args.dataset
 
 def get_model_path(is_end2end: bool, flow_id=None):
-    """获取模型路径"""
 
-    # 原逻辑
     if not is_end2end:
         if args.model_type=="origin" or args.model_type=="retrain":
             tail=".t"
@@ -219,7 +214,6 @@ def get_model_path(is_end2end: bool, flow_id=None):
         p = f"./models/face-{args.model_type}-{model_name}-id{flow_id}-best-val"+tail
         path = Path(p)
 
-    # end2end模式：从communicator中获取模型路径
     else:
         path: Path = communicator.ModelPathCommunicator().get()
 
@@ -233,11 +227,9 @@ def get_model_path(is_end2end: bool, flow_id=None):
 model_config_path = f"./FACE/config/{args.dataset}.yaml"
 abs_model_config_path = get_absolute_path(model_config_path)
 my_flow_model = MyFlowModel(config_path=abs_model_config_path)
-# 从communicator中获取参数
 if args.end2end:
     my_flow_model.learning_rate = float(JsonCommunicator().get('face.learning_rate'))
 
-# [END2END] 从communicator中获取模型路径
 path = get_model_path(is_end2end=args.end2end, flow_id=my_flow_model.flow_id)
 model = my_flow_model.load_model(device=DEVICE, model_path=path)
 
@@ -245,7 +237,6 @@ n_params = nflows_utils.get_num_parameters(model)
 print("There are {} trainable parameters in this model.".format(n_params))
 print("Parameters total size is {} MB".format(n_params * 4 / 1024 / 1024))
 
-# [END2END] 从communicator中获取数据集路径
 data, n, dim = faceDataUtils.LoadTable(
     dataset_name=args.dataset, is_end2end=args.end2end
 )
@@ -366,7 +357,6 @@ def testHyper(n, N, num_iterations, alpha, beta):
             n=n, N=N, num_iterations=num_iterations, alpha=alpha, beta=beta
         )
 
-        # end2end模式：打印result
 
         result_origin = torch.cat(tuple(result_origin))
         FULL_SIZE = torch.Tensor([DW.n])
@@ -404,22 +394,22 @@ def testHyper(n, N, num_iterations, alpha, beta):
     print(message)
     if args.end2end:
         log_file_name=(
-            "face+"  # 模型
-            f"{args.dataset}+"  # 数据集
+            "face+"  
+            f"{args.dataset}+" 
             f"num_workloads{args.num_workload}+"
-            f"{args.data_update}+"  # 数据更新方式
-            f"{args.model_update}+" # 模型更新方式
-            f"qseed{args.query_seed}+"  # query的随机种子
+            f"{args.data_update}+"  
+            f"{args.model_update}+" 
+            f"qseed{args.query_seed}+" 
             f".txt"
         )
         log_file_path=f"./end2end/end2end-evaluations/{log_file_name}"
         log_util.append_to_file(log_file_path, f"{message}\n")
     else:
         output_file_name = (
-            "face+"  # 模型
-            f"{args.dataset}+"  # 数据集
-            f"{args.data_update}+"  # 数据更新方式
-            f"qseed{args.query_seed}"  # query的随机种子
+            "face+"  
+            f"{args.dataset}+" 
+            f"{args.data_update}+"  
+            f"qseed{args.query_seed}"  
             f".txt"
         )
         output_file_path=f"./end2end/model-evaluation/{output_file_name}"

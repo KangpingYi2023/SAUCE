@@ -38,7 +38,6 @@ LR_Naru=4e-3
 def create_parser():
     parser = argparse.ArgumentParser()
 
-    # 添加通用参数
     common_args: List[ArgType] = [
         ArgType.DATA_UPDATE,
         ArgType.DATASET,
@@ -693,7 +692,6 @@ def AdaptTask(
     torch.manual_seed(0)
     np.random.seed(0)
 
-    # 读取数据集
     if not end2end:
         table, split_indices = dataset_util.DatasetLoader.load_permuted_dataset(
             dataset=args.dataset, permute=False
@@ -910,7 +908,7 @@ def TransferDataPrepare(train_data, split_indices: List[int], update_step):
     # print(f"Update size:{args.update_size}")
     transfer_size=args.update_size*0.2
 
-    # 分别尝试自适应比例和固定比例
+    # weighted sampled transfer set construction
     factor=args.update_size/(train_data.size()-args.update_size)
     # factor=0.7
     old_size=round((1-factor)*transfer_size)
@@ -919,9 +917,8 @@ def TransferDataPrepare(train_data, split_indices: List[int], update_step):
     transfer_data = copy.deepcopy(train_data)
     tuples1 = transfer_data.tuples[: -args.update_size]
     rndindices = torch.randperm(len(tuples1))[:old_size]
-    transfer_data.tuples = tuples1[rndindices]  # 从原始数据中随机抽取样本放进迁移数据集
+    transfer_data.tuples = tuples1[rndindices]  
 
-    # 从更新数据切片中抽样数据放进迁移数据集
     tuples1 = train_data.tuples[-args.update_size :]
     rndindices = torch.randperm(len(tuples1))[:new_size]
     transfer_data.tuples = torch.cat(
@@ -937,7 +934,6 @@ def UpdateTask(
     torch.manual_seed(0)
     np.random.seed(0)
 
-    # 读取数据集
     if not end2end:
         table, split_indices = dataset_util.DatasetLoader.load_permuted_dataset(
             dataset=args.dataset, permute=False
@@ -1147,7 +1143,6 @@ def FineTuneTask(pre_model, new_model_path=None, seed=0, end2end: bool = False):
     torch.manual_seed(0)
     np.random.seed(0)
 
-    # 读取数据集
     if not end2end:
         table, split_indices = dataset_util.DatasetLoader.load_permuted_dataset(
             dataset=args.dataset, permute=False
@@ -1616,7 +1611,6 @@ def main():
             # UpdateTask(pre_model=model_path, freeze=True)
             FineTuneTask(pre_model=model_path)
     else:
-        # end2end实验：用1种增量训练方法，训练1个模型
         model_path = communicator.ModelPathCommunicator().get()
         new_model_path = model_path  
 

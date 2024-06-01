@@ -52,8 +52,6 @@ class PythonScriptRunner(BaseScriptRunner):
     def run_script(self):
         """
         Execute the python script with the specified arguments using "subprocess.run".
-
-        由于 "subprocess.run" 默认是阻塞性的，它会等待启动的进程结束后再继续执行。
         """
         # Construct the command with arguments
         cmd = self._generate_python_script()

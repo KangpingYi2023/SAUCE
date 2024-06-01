@@ -11,29 +11,21 @@ from update_utils.path_util import get_absolute_path
 class DatasetLoaderUtils:
     @staticmethod
     def clean_df(df: pd.DataFrame) -> pd.DataFrame:
-        # 删除所有值均为缺失值的列
         df = df.dropna(axis=1, how="all")
 
-        # 选择数据类型为 'object' 的列（通常是字符串）
         df_obj = df.select_dtypes(["object"])
 
-        # 遍历这些列，尝试将其转换为更合适的数据类型（整数或浮点数）
         for col in df_obj.columns:
-            # 尝试转换为整数
             try:
                 df[col] = pd.to_numeric(df[col], downcast='integer')
             except ValueError:
-                # 如果转换整数失败，尝试转换为浮点数
                 try:
                     df[col] = pd.to_numeric(df[col], downcast='float')
                 except ValueError:
-                    # 如果还是失败，说明确实是字符串，去除首尾的空白字符
                     df[col] = df[col].str.strip()
 
-        # 将空字符串替换为缺失值
         df.replace("", np.nan, inplace=True)
 
-        # 删除含有任何缺失值的行
         df.dropna(inplace=True)
 
         return df
@@ -123,11 +115,11 @@ class CsvDatasetLoader:
             finetune=False
     ):
         cols = CsvDatasetLoader.DICT_FROM_DATASET_TO_COLS.get(dataset_name, [])
-        # 读取数据
+
         csv_file = f"./data/{dataset_name}/{dataset_name}.csv"
         csv_file = get_absolute_path(csv_file)
         df = pd.read_csv(csv_file, usecols=cols, sep=",")
-        # 处理数据
+
         df = DatasetLoaderUtils.clean_df(df)
 
         if batch_num != None:
@@ -159,11 +151,9 @@ class CsvDatasetLoader:
         csv_file = get_absolute_path(csv_file)
         cols = CsvDatasetLoader.DICT_FROM_DATASET_TO_COLS.get(dataset_name, [])
 
-        # 读取数据
         df = pd.read_csv(csv_file, usecols=cols, sep=",")
         print(df.shape)
 
-        # 处理数据
         df = DatasetLoaderUtils.clean_df(df)
 
         return DatasetLoaderUtils.handle_permuted_dataset(
@@ -179,7 +169,6 @@ class CsvDatasetLoader:
 
         df = pd.read_csv(csv_file, usecols=cols, sep=",")
         print(df.shape)
-        # 处理数据
         df = DatasetLoaderUtils.clean_df(df)
 
         if num_of_sorted_cols == 0:
@@ -238,10 +227,8 @@ class NpyDatasetLoader:
 
     @staticmethod
     def load_npy_dataset_from_path(path: Path):
-        # 读取数据
         df, cols = NpyDatasetLoader._load_npy_as_df(path)
 
-        # 处理数据
         df = DatasetLoaderUtils.clean_df(df)
 
         print("load_npy_dataset_from_path - df.shape =", df.shape)
@@ -250,18 +237,15 @@ class NpyDatasetLoader:
 
     @staticmethod
     def load_permuted_npy_dataset(dataset_name: str, permute=True):
-        # 读取数据
         if dataset_name=='census':
             npy_file_path = f"./data/{dataset_name}/end2end/census_int.npy"
         else:
             npy_file_path = f"./data/{dataset_name}/end2end/{dataset_name}.npy"
         permuted_csv_file_path = f"./data/{dataset_name}/permuted_dataset.csv"
         if permute:
-            # 读取原始npy文件
             abs_file_path = get_absolute_path(npy_file_path)
             df, cols = NpyDatasetLoader._load_npy_as_df(abs_file_path)
         else:
-            # 读取permute后的npy文件
             abs_file_path = get_absolute_path(npy_file_path)
             df, cols = NpyDatasetLoader._load_npy_as_df(abs_file_path)
             '''
@@ -269,7 +253,6 @@ class NpyDatasetLoader:
             df = pd.read_csv(abs_file_path, sep=",")
             '''
 
-        # 处理数据
         df = DatasetLoaderUtils.clean_df(df)
 
         return DatasetLoaderUtils.handle_permuted_dataset(
@@ -322,7 +305,6 @@ class DatasetLoader:
             table, split_indices = NpyDatasetLoader.load_permuted_npy_dataset(dataset_name=dataset, permute=permute)
         '''
         
-        # 更新数据会保存到npy文件，因此统一从npy文件读取数据
         if dataset in ["census", "forest", "bjaq", "power"]:
             table, split_indices = NpyDatasetLoader.load_permuted_npy_dataset(dataset_name=dataset, permute=permute)
         else:
@@ -363,16 +345,15 @@ class DatasetConverter:
         """
         arg_util.validate_argument(arg_util.ArgType.DATASET, dataset_name)
 
-        # 读取数据
+
         csv_file_path = f"./data/{dataset_name}/{dataset_name}.csv"
         abs_csv_file_path = get_absolute_path(csv_file_path)
         df = pd.read_csv(abs_csv_file_path, sep=",")
-        # 处理数据
+
         df = DatasetLoaderUtils.clean_df(df)
 
         print(f"load_csv_dataset - {dataset_name}", df.shape)
 
-        # 保存数据为.npy格式
         npy_file_path = f"./data/{dataset_name}/{dataset_name}.npy"
         abs_npy_file_path = get_absolute_path(npy_file_path)
         np.save(abs_npy_file_path, df.values)

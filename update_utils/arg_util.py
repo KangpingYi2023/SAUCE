@@ -38,7 +38,7 @@ def add_common_arguments(parser: argparse.ArgumentParser, arg_types: List[ArgTyp
                 type=str,
                 choices=["bjaq", "census", "forest", "power"],
                 required=True,
-                help="选择数据集:bjaq, census, forest, power",
+                help="choose datasets: bjaq, census, forest, power",
             )
         if arg_type == ArgType.DEBUG:
             parser.add_argument(

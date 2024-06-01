@@ -6,7 +6,6 @@ from update_utils import path_util
 
 class JsonCommunicator:
     def __init__(self, file_path: str = './end2end/communicate/parameters.json'):
-        """初始化方法，设置JSON文件的路径"""
         self.file_path: Path = path_util.get_absolute_path(file_path)
 
     def get_all_in_str(self):
@@ -18,7 +17,6 @@ class JsonCommunicator:
             json.dump({}, file)
 
     def get(self, key_path):
-        """读取指定key路径的值"""
         try:
             with open(self.file_path, 'r') as file:
                 data = json.load(file)
@@ -36,32 +34,29 @@ class JsonCommunicator:
             return None
 
     def set(self, key_path, value):
-        """写入或更新指定key路径的值"""
         data = self._load_or_initialize_data()
         keys = key_path.split('.')
         d = data
-        for key in keys[:-1]:  # 遍历路径上的所有键，除了最后一个
+        for key in keys[:-1]:  
             if key not in d or not isinstance(d[key], dict):
-                d[key] = {}  # 如果路径不存在或者不是字典，则创建一个新字典
+                d[key] = {}  
             d = d[key]
-        d[keys[-1]] = value  # 设置最终的键值
+        d[keys[-1]] = value  
         self._write_data(data)
 
     def update(self, key_path, value):
-        """如果存在，则更新指定key路径的值，否则不执行任何操作"""
         data = self._load_or_initialize_data()
         keys = key_path.split('.')
         d = data
         for key in keys[:-1]:
-            if key not in d or not isinstance(d[key], dict):  # 如果路径不存在，直接返回
+            if key not in d or not isinstance(d[key], dict):  
                 return
             d = d[key]
-        if keys[-1] in d:  # 只有最终键存在时才更新
+        if keys[-1] in d:  
             d[keys[-1]] = value
             self._write_data(data)
 
     def _load_or_initialize_data(self):
-        """尝试加载JSON文件，如果失败则返回空字典"""
         try:
             with open(self.file_path, 'r') as file:
                 return json.load(file)
@@ -69,7 +64,6 @@ class JsonCommunicator:
             return {}
 
     def _write_data(self, data):
-        """将数据写回JSON文件"""
         try:
             with open(self.file_path, 'w') as file:
                 json.dump(data, file, indent=4)
@@ -78,10 +72,9 @@ class JsonCommunicator:
 
 
 def create_empty_json(file_path):
-    """创建一个空的JSON文件"""
     try:
         with open(file_path, 'w') as file:
-            json.dump({}, file)  # 写入一个空字典到文件
+            json.dump({}, file) 
         print(f"Empty JSON file created at {file_path}")
     except IOError as e:
         print(f"Error creating JSON file at {file_path}: {e}")

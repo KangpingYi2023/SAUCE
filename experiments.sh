@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# 执行第一个命令
+
 echo "Data update and "
 python end2end/multi_experiments.py
 
 model=naru
 # model=transformer
 
-# 执行第二个命令
+
 echo "Incremental learning"
 
 # Naru/Transformer incremental train

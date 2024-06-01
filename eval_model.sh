@@ -3,7 +3,7 @@
 model=naru
 # model=transformer
 
-# 循环执行命令，将query_seed分别设置为1到10
+# module test command for query workloads
 echo "Model evaluation"
 for query_seed in {31..50}
 do

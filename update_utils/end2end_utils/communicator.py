@@ -48,12 +48,10 @@ class RandomSeedCommunicator:
 class PathCommunicator(FileCommunicator):
     def __init__(self, file_path: str, prompt: str):
         super().__init__(file_path)
-        self.prompt = prompt  # 新增属性来区分类型
+        self.prompt = prompt  
 
     def get(self) -> Path:
-        """
-        读取txt获取当前路径
-        """
+
         with open(self.abs_file_path, 'r') as file:
             content = file.read()
         print(f"GET-{self.prompt}-PATH={content}")
@@ -61,9 +59,7 @@ class PathCommunicator(FileCommunicator):
         return abs_path
 
     def set(self, new_path: str):
-        """
-        将new_path写入txt用于记录当前路径
-        """
+
         with open(self.abs_file_path, 'w') as file:
             file.write(new_path)
         print(f"SET-{self.prompt}-PATH={new_path}")
@@ -84,17 +80,11 @@ class DriftCommunicator(FileCommunicator):
         super().__init__(file_path)
 
     def get(self) -> bool:
-        """
-        读取txt，若为"true"则返回True，否则返回False
-        """
         with open(self.abs_file_path, 'r') as file:
             content = file.read()
         return content == 'true'
 
     def set(self, is_drift: bool):
-        """
-        将"true"或"false"写入txt
-        """
         with open(self.abs_file_path, 'w') as file:
             content = 'true' if is_drift else 'false'
             file.write(content)
@@ -105,18 +95,12 @@ class CommaSplitArrayCommunicator(FileCommunicator):
         super().__init__(file_path)
 
     def get(self) -> list:
-        """
-        读取txt文件，将字符串分割为数组
-        """
         with open(self.abs_file_path, 'r') as file:
             content = file.read()
         content_list = content.split(',') if content else []
         return content_list
 
     def set(self, array: list):
-        """
-        将数组转换为字符串并写入txt文件
-        """
         array_str = ','.join(map(str, array))
         with open(self.abs_file_path, 'w') as file:
             file.write(array_str)
@@ -146,7 +130,6 @@ class SplitIndicesCommunicator(CommaSplitArrayCommunicator):
 
 
 if __name__ == '__main__':
-    # 示例用法
     model_path_communicator = ModelPathCommunicator()
     dataset_path_communicator = DatasetPathCommunicator()
 

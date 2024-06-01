@@ -232,7 +232,7 @@ class CsvTable(Table):
             #
             # For numeric: np.nan
             # For datetime: np.datetime64('NaT')
-            col.SetDistribution(data[c].value_counts(dropna=False).index.values)  # 统计每个值出现的次数
+            col.SetDistribution(data[c].value_counts(dropna=False).index.values)  
             columns.append(col)
         print("done, took {:.1f}s".format(time.time() - s))
         return columns

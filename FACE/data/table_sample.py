@@ -172,7 +172,6 @@ def permute(data, size):
     print("Permute - START")
     n_rows, n_cols = data.shape
 
-    # 预先分配足够大的数组
     samples = np.empty(shape=(size, n_cols))
 
     for i in range(size):
@@ -311,9 +310,8 @@ def JS_test(
              
     for step in range(epoch):
         old_sample = sampling(data, sample_size, replace=False)
-        # 随机采样
         new_sample = sampling(update_data, sample_size, replace=False)
-        # # 根据新旧数据比例加权采样
+
         # ratio=update_data.shape[0]/data.shape[0]
         # new_sample1=sampling(data, round((1-ratio)*sample_size), replace=False)
         # new_sample2 = sampling(update_data, round(ratio* sample_size), replace=False)
@@ -403,7 +401,6 @@ def parse_args():
 def main():
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cuda")
 
-    # 提取参数
     args = parse_args()
     arg_util.validate_argument(arg_util.ArgType.DATASET, args.dataset)
     ini_data_size = args.init_size
@@ -419,7 +416,6 @@ def main():
     raw_file_path = get_absolute_path(raw_file_path)
     sampled_file_path = get_absolute_path(sampled_file_path)
 
-    # 为原始数据集创建子集
     if args.run == "init":
         raw_data = np.load(raw_file_path, allow_pickle=True)
         ini_data = sampling(raw_data, ini_data_size, replace=False)
@@ -432,7 +428,6 @@ def main():
     flow_reader = MyFlowModel(config_path=config_path)
     flow = flow_reader.load_model(device)
 
-    # 抽取增量更新数据，更新数据集，并进行数据漂移判定，输出mean reduction、2*std、Mean JS divergence三个参数
     if args.run == "update":
         update_size = args.update_size
         sample_size = args.sample_size
@@ -448,7 +443,6 @@ def main():
 
         # update_data = np.concatenate((data, update_data), axis=0)
 
-        # 若报错，暂时不计算mean_reduction和threshold
         mean_reduction, threshold = loss_test(data, update_data, sample_size, flow=flow)
 
         # print("sample dtype: {}".format(old_sample.dtype))
