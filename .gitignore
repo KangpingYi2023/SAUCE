@@ -16,5 +16,5 @@ end2end/model-evaluation/*
 end2end/parsed-records/*
 models/*
 take-over.md
-!end2end/*/tmp
+!end2end/**/tmp
 !models/**origin_models
