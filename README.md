@@ -24,3 +24,11 @@ pip install .
 # You can run an end-to-end experiment by running this conmmand. Some config examples are stored in ./end2end/configs/. You can choose the config file from this python script
 python end2end/multi_experiments.py
 ```
+
+### Results
+
+Experimental results will be shown in the following folds:
+
+- The detailed experiment records will be shown in ./end2end/experiment-records
+- The overall performance will be shown in ./end2end/parsed-records
+- The q-errors of each query workloads will be shown in ./end2end/end2end-evaluations
