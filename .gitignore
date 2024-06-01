@@ -9,12 +9,12 @@ FACE/train/models/*
 data/power/end2end/power.npy
 *_pool.npy
 end2end/end2end-bootstrap/*.csv
-end2end/end2end-evaluations/*.txt
-end2end/experiment-records/*.txt
+end2end/end2end-evaluations/*
+end2end/experiment-records/*
 end2end/figures/
 end2end/model-evaluation/*
 end2end/parsed-records/*
 models/*
 take-over.md
-!end2end/**/tmp
+!end2end/*/tmp
 !models/**origin_models

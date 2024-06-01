@@ -1,2 +1,0 @@
-origin-bjaq_15.87 	max: 5.0000	99th: 2.5724	95th: 1.5375	median: 1.0561	mean: 1.1488
-origin-bjaq_15.87 	max: 2072.8750	99th: 49.5128	95th: 3.0000	median: 1.1200	mean: 6.8426
