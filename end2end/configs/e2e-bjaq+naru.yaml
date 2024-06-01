@@ -1,0 +1,14 @@
+args_combination:
+  dataset: ["bjaq"]
+  model_update: ["none", "update", "adapt"]
+  update_size: [20000]
+  data_update: ["tupleskew"]
+  model: ["naru"]
+  num_workload: [15]
+  query_seed: [0]
+  num_queries: [100]
+
+params_combination:
+  data_updater.skew_ratio: [1e-3]
+  random_seed: [1226]
+  naru.epochs: [40]
