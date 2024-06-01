@@ -74,7 +74,7 @@ def parse_experiment_records(
         model=group[0]
         dataset=group[1]
         model_update_type=group[2]
-        update_type=group[3]
+        # update_type=group[3]
 
         parse_lines_with_keywords(src_file_path, dst_file_path, start_words)
 
@@ -128,14 +128,6 @@ def parse_experiment_records(
                     + generate_report_est_str(after_query_errs)
                 )
                 log_util.append_to_file(dst_file_path, content=after_query_est_msg)
-
-                # errs[dataset][update_type][model]+=[first_query_errs]
-                errs[dataset][update_type][model]+=[after_query_errs]
-                # err_labels[dataset][update_type][model].append(f"{model_update_type} 1st")
-                err_labels[dataset][update_type][model].append(f"{model_update_type} 2nd-to-end")
-
-                # figure_name=dst_file_path.name.rstrip(".txt")
-                # plot_box(first_query_errs, after_query_errs, plot_labels=["1st", "2nd-to-end"], file_name=figure_name)
 
 
 def sum_float_var_in_log(file_path: Path, var_name: str) -> float:
