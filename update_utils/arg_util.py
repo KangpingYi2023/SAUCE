@@ -31,7 +31,7 @@ def add_common_arguments(parser: argparse.ArgumentParser, arg_types: List[ArgTyp
             parser.add_argument(
                 "--update_size", type=int, default=20000, help="default=20000"
             )
-            parser.add_argument("--num-queries", type=int, default=1000, help="# queries.")
+            parser.add_argument("--num_queries", type=int, default=1000, help="# queries.")
         if arg_type == ArgType.DATASET:
             parser.add_argument(
                 "--dataset",

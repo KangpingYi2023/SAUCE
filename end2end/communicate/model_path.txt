@@ -1,1 +1,1 @@
-./models/end2end/face/bjaq-id2-best-val.t
+./models/end2end/naru/origin-bjaq-3.5MB-model34.414-data18.543-200epochs-seed0.pt

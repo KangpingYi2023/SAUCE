@@ -229,6 +229,7 @@ def define_workloads(
             "dataset": args.dataset,
             "model": args.model,
             "query_seed": args.query_seed,
+            "num_queries": args.num_queries,
             "end2end": None,
             "eval_type": "first_estimate",  # For distinguishing query and data-update workloads in Naru/eval_model.py
             "num_workload": args.num_workload,
