@@ -456,10 +456,10 @@ def main():
         f"{model}+"  # Model
         f"{dataset}+"  # Dataset
         f"{args.model_update}+"  # Model update method (adapt/update)
-        f"{args.data_update}+"  # Data update method (single/permute/sample)
+        # f"{args.data_update}+"  # Data update method (single/permute/sample)
         f"wl{args.num_workload}+"  # Number of workloads
-        f"qseed{args.query_seed}+"  # Query seed
-        f"sseed{sseed}+"  # Sample seed
+        # f"qseed{args.query_seed}+"  # Query seed
+        # f"sseed{sseed}+"  # Sample seed
         f"t{formatted_datetime}"  # Experiment time
         f".txt"
     )

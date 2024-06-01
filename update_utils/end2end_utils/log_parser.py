@@ -136,14 +136,6 @@ def parse_experiment_records(
 
                 # figure_name=dst_file_path.name.rstrip(".txt")
                 # plot_box(first_query_errs, after_query_errs, plot_labels=["1st", "2nd-to-end"], file_name=figure_name)
-        
-    for dataset_name in DATASET_NAME:
-        for ut in UPDATE_TYPE:
-            for model_name in MODEL_NAME:
-                if errs[dataset_name][ut][model_name]:
-                    plot_name=f"{model_name}+{dataset_name}+{ut}"
-                    plot_box(errs[dataset_name][ut][model_name], err_labels[dataset_name][ut][model_name], file_name=plot_name)
-
 
 
 def sum_float_var_in_log(file_path: Path, var_name: str) -> float:
