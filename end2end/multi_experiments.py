@@ -43,13 +43,17 @@ def run_multi_experiments(
             arg_dict["drift_test"] = "js"
 
         if arg_dict["dataset"] == "census":
-            arg_dict["update_size"] = 4000
+            arg_dict["update_size"] = 4000 #small batch for e2e
+            # arg_dict["update_size"] = 8000 #big batch for module test
         elif arg_dict["dataset"] == "forest":
-            arg_dict["update_size"] = 25000
+            arg_dict["update_size"] = 25000 #small batch for e2e
+            # arg_dict["update_size"] = 100000 #big batch for module test
         elif arg_dict["dataset"] == "bjaq":
-            arg_dict["update_size"] = 20000
+            arg_dict["update_size"] = 20000 #small batch for e2e
+            # arg_dict["update_size"] = 80000 #big batch for module test
         elif arg_dict["dataset"] == "power":
-            arg_dict["update_size"] = 40000
+            arg_dict["update_size"] = 40000 #small batch for e2e
+            # arg_dict["update_size"] = 400000 #big batch for module test
 
         # Iterate over each combination of params
         print("Plan to run experiment(s) with arguments: \t", arg_dict)
@@ -72,9 +76,15 @@ def run_multi_experiments(
 
 
 if __name__ == "__main__":
-    # Path for experiment parameters
-    args_yaml_path = path_util.get_absolute_path("./end2end/args.yaml")
-    # args_yaml_path = path_util.get_absolute_path("./end2end/args_v2.yaml")
+    # self-defined parameters
+    args_yaml_path = path_util.get_absolute_path("./end2end/configs/args.yaml")
+    # e2e parameters for each dataset
+    args_yaml_path = path_util.get_absolute_path("./end2end/configs/e2e-bjaq+naru.yaml")
+    args_yaml_path = path_util.get_absolute_path("./end2end/configs/e2e-bjaq+transformer.yaml")
+    args_yaml_path = path_util.get_absolute_path("./end2end/configs/e2e-census+naru.yaml")
+    args_yaml_path = path_util.get_absolute_path("./end2end/configs/e2e-census+transformer.yaml")
+    args_yaml_path = path_util.get_absolute_path("./end2end/configs/e2e-forest+naru.yaml")
+    args_yaml_path = path_util.get_absolute_path("./end2end/configs/e2e-forest+transformer.yaml")
 
     # Read experiment parameters
     with open(args_yaml_path, 'r', encoding='utf-8') as file:

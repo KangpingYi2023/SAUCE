@@ -6,7 +6,6 @@
 FACE/evaluate/oracle/*
 FACE/data/*.npy
 FACE/train/models/*
-<<<<<<< HEAD
 data/power/end2end/power.npy
 *_pool.npy
 end2end/end2end-bootstrap/**
@@ -18,6 +17,3 @@ end2end/parsed-records/**
 models/**
 !models/*origin_models
 take-over.md
-=======
-data/power/end2end/power.npy
->>>>>>> 0a87ad0decc40b932a37b1b1c77ca8d03828bce2
