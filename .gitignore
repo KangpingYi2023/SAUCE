@@ -4,7 +4,7 @@
 *-sample*.npy
 *power.npy
 FACE/evaluate/oracle/*
-FACE/data/*.npy
+FACE/data/**.npy
 FACE/train/models/*
 data/power/end2end/power.npy
 *_pool.npy
@@ -15,5 +15,5 @@ end2end/figures/
 end2end/model-evaluation/** 
 end2end/parsed-records/**
 models/**
-!models/*origin_models
+!models/**origin_models
 take-over.md
