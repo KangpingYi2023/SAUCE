@@ -1,1 +1,9 @@
-{}
+{
+    "data_updater": {
+        "skew_ratio": "1e-3"
+    },
+    "random_seed": 1226,
+    "naru": {
+        "epochs": 40
+    }
+}

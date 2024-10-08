@@ -342,18 +342,9 @@ def InitWeight(m):
         nn.init.normal_(m.weight, std=0.02)
 
 
-def TrainTask(seed=0):
+def TrainTask(dataset, table, seed=0):
     torch.manual_seed(0)
     np.random.seed(0)
-
-    if args.dataset == "power":
-        global DEVICE
-        DEVICE = torch.device("cuda:1")
-    # Load dataset
-    if args.training_type=="train":
-        table = dataset_util.DatasetLoader.load_dataset(dataset=args.dataset)
-    elif args.training_type=="retrain":
-        table, _ = dataset_util.DatasetLoader.load_permuted_dataset(dataset=args.dataset)
 
     table_bits = Entropy(
         table,
@@ -456,7 +447,7 @@ def TrainTask(seed=0):
 
     if args.training_type=="train":
         PATH = "./models/origin-{}-{:.1f}MB-model{:.3f}-data{:.3f}-{}epochs-seed{}.pt".format(
-            args.dataset,
+            dataset,
             mb,
             model.model_bits,
             table_bits,
@@ -465,7 +456,7 @@ def TrainTask(seed=0):
         )
     elif args.training_type=="retrain":
         PATH = "./models/retrain-{}-{:.1f}MB-model{:.3f}-data{:.3f}-{}epochs-seed{}.pt".format(
-            args.dataset,
+            dataset,
             mb,
             model.model_bits,
             table_bits,
@@ -476,7 +467,19 @@ def TrainTask(seed=0):
 
 
 def main():
-    TrainTask()
+    # Load dataset
+    if args.dataset == "stats":
+        table_list=['badges', 'votes', 'postHistory', 'posts', 'users', 'comments', 'postLinks', 'tags']
+        for table_name in table_list:
+            dataset_name="stats_" + table_name
+            table = dataset_util.DatasetLoader.load_dataset(dataset=dataset_name)
+            TrainTask(dataset=dataset_name, table=table)
+    elif args.dataset in ["power", "census", "bjaq"]:
+        if args.training_type=="train":
+            table = dataset_util.DatasetLoader.load_dataset(dataset=args.dataset)
+        elif args.training_type=="retrain":
+            table, _ = dataset_util.DatasetLoader.load_permuted_dataset(dataset=args.dataset)
+        TrainTask(dataset=args.dataset, table=table)
 
 
 if __name__ == "__main__":

@@ -105,7 +105,16 @@ class CsvDatasetLoader:
             "Hillshade_Noon",
             "Hillshade_3pm",
             "Horizontal_Distance_To_Fire_Points",
-        ]
+        ],
+        "stats_badges": ['Id', 'UserId', 'Date'],
+        "stats_votes": ['Id', 'PostId', 'VoteTypeId', 'CreationDate', 'UserId', 'BountyAmount'],
+        "stats_postHistory": ['Id', 'PostHistoryTypeId', 'PostId', 'CreationDate', 'UserId'],
+        "stats_posts": ['Id', 'PostTypeId', 'CreationDate', 'Score', 'ViewCount', 'OwnerUserId','AnswerCount', 'CommentCount', 'FavoriteCount', 'LastEditorUserId'],
+        "stats_users": ['Id', 'Reputation', 'CreationDate', 'Views', 'UpVotes', 'DownVotes'],
+        "stats_comments": ['Id', 'PostId', 'Score', 'CreationDate', 'UserId'],
+        "stats_postLinks": ['Id', 'CreationDate', 'PostId', 'RelatedPostId', 'LinkTypeId'],
+        "stats_tags": ['Id', 'Count', 'ExcerptPostId'],
+
     }
 
     @staticmethod
@@ -116,7 +125,11 @@ class CsvDatasetLoader:
     ):
         cols = CsvDatasetLoader.DICT_FROM_DATASET_TO_COLS.get(dataset_name, [])
 
-        csv_file = f"./data/{dataset_name}/{dataset_name}.csv"
+        if dataset_name in ["census", "forest"]:
+            csv_file = f"./data/{dataset_name}/{dataset_name}.csv"
+        elif dataset_name.split("_")[0] in ["stats"]:
+            table_name=dataset_name.split("_")[-1]
+            csv_file = f"./data/stats_simplified/{table_name}.csv"
         csv_file = get_absolute_path(csv_file)
         df = pd.read_csv(csv_file, usecols=cols, sep=",")
 
@@ -272,13 +285,15 @@ class DatasetLoader:
         Returns:
             The loaded dataset
         """
-        arg_util.validate_argument(arg_util.ArgType.DATASET, dataset)
+        # arg_util.validate_argument(arg_util.ArgType.DATASET, dataset)
 
         if dataset in ["census", "forest"]:
             table = CsvDatasetLoader.load_csv_dataset(dataset_name=dataset)
         elif dataset in ["bjaq", "power"]:
             abs_path = get_absolute_path(f"./data/{dataset}/{dataset}.npy")
             table = NpyDatasetLoader.load_npy_dataset_from_path(path=abs_path)
+        elif dataset.split("_")[0] in ["stats"]:
+            table = CsvDatasetLoader.load_csv_dataset(dataset_name=dataset)
         else:
             raise ValueError(f"Unknown dataset name \"{dataset}\"")
 

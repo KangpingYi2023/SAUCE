@@ -1,0 +1,117 @@
+tables:
+  badges:
+    attributes: ['Id', 'UserId', 'Date']
+    table_size: 79851
+    file_path: './data/stats_simplified/badges.csv'
+    join_schema: 
+      users: ['UserId', 'Id']
+    
+  votes:
+    attributes: ['Id', 'PostId', 'VoteTypeId', 'CreationDate', 'UserId', 'BountyAmount']
+    table_size: 328064
+    file_path: './data/stats_simplified/votes.csv'
+    join_schema: null
+
+  postHistory:
+    attributes: ['Id', 'PostHistoryTypeId', 'PostId', 'CreationDate', 'UserId']
+    table_size: 303187
+    file_path: './data/stats_simplified/postHistory.csv'
+    join_schema: null
+
+  posts:
+    attributes: ['Id', 'PostTypeId', 'CreationDate', 'Score', 'ViewCount', 'OwnerUserId','AnswerCount', 'CommentCount', 'FavoriteCount', 'LastEditorUserId']
+    table_size: 91976
+    file_path: './data/stats_simplified/posts.csv'
+    join_schema:
+      comments: ['Id', 'PostId']
+      tags: ['Id', 'ExcerptPostId']
+
+  users:
+    attributes: ['Id', 'Reputation', 'CreationDate', 'Views', 'UpVotes', 'DownVotes']
+    table_size: 40325
+    file_path: './data/stats_simplified/users.csv'
+    join_schema:
+      comments: ['Id', 'UserId']
+      badegs: ['Id', 'UserId']
+
+  comments:
+    attributes: ['Id', 'PostId', 'Score', 'CreationDate', 'UserId']
+    table_size: 174305
+    file_path: './data/stats_simplified/comments.csv'
+    join_schema:
+      posts: ['PostId', 'Id']
+      users: ['UserId', 'Id']
+
+  postLinks:
+    attributes: ['Id', 'CreationDate', 'PostId', 'RelatedPostId', 'LinkTypeId']
+    table_size: 11102
+    file_path: './data/stats_simplified/postLinks.csv'
+    join_schema: null
+
+  tags:
+    attributes: ['Id', 'Count', 'ExcerptPostId']
+    table_size: 1032
+    file_path: './data/stats_simplified/tags.csv'
+    join_schema:
+      posts: ['ExcerptPostId', 'Id']
+
+schema:
+  -
+    - 'comments'
+    - 'PostId'
+    - 'posts'
+    - 'Id'
+  -
+    - 'comments'
+    - 'UserId'
+    - 'users'
+    - 'Id'
+  - 
+    - 'badges'
+    - 'UserId'
+    - 'users'
+    - 'Id'
+  - 
+    - 'tags'
+    - 'ExcerptPostId'
+    - 'posts'
+    - 'Id'
+  - 
+    - 'postLinks'
+    - 'PostId'
+    - 'posts'
+    - 'Id'
+  - 
+    - 'postLinks'
+    - 'RelatedPostId'
+    - 'posts'
+    - 'Id'
+  - 
+    - 'postHistory'
+    - 'PostId'
+    - 'posts'
+    - 'Id'
+  - 
+    - 'postHistory'
+    - 'UserId'
+    - 'users'
+    - 'Id'
+  - 
+    - 'votes'
+    - 'PostId'
+    - 'posts'
+    - 'Id'
+  - 
+    - 'votes'
+    - 'UserId'
+    - 'users'
+    - 'Id'
+  - 
+    - 'posts'
+    - 'OwnerUserId'
+    - 'users'
+    - 'Id'
+
+
+
+

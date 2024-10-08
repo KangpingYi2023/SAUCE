@@ -1665,8 +1665,7 @@ def test_for_drift(
     print(f"{detection_type} Drift detection: {is_drift}")
     print("Detection latency: {:.4f}s".format(time_overhead))
     communicator.DriftCommunicator().set(is_drift=is_drift)  
-
-    
+  
 
 def main():
     is_end2end: bool = args.end2end
@@ -1697,4 +1696,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    table, train_data, oracle_est = MakeTable()
+    num_samples=1000
+    JS=estimators_lib.JoinSampling(join_iter=train_data, table=table, num_samples=num_samples)
+    print("Success!")
+

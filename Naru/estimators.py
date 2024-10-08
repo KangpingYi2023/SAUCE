@@ -8,6 +8,7 @@ import collections
 import json
 import operator
 import time
+import os
 
 import numpy as np
 import pandas as pd
@@ -16,6 +17,9 @@ import torch
 import common
 import made
 import transformer
+import join_utils
+import utils
+
 
 OPS = {
     ">": np.greater,
@@ -38,19 +42,19 @@ class CardEst(object):
 
         self.name = "CardEst"
 
-    def Query(self, columns, operators, vals):
-        """Estimates cardinality with the specified conditions.
+    # def Query(self, columns, operators, vals):
+    #     """Estimates cardinality with the specified conditions.
 
-        Args:
-            columns: list of Column objects to filter on.
-            operators: list of string representing what operation to perform on
-              respective columns; e.g., ['<', '>='].
-            vals: list of raw values to filter columns on; e.g., [50, 100000].
-              These are not bin IDs.
-        Returns:
-            Predicted cardinality.
-        """
-        raise NotImplementedError
+    #     Args:
+    #         columns: list of Column objects to filter on.
+    #         operators: list of string representing what operation to perform on
+    #           respective columns; e.g., ['<', '>='].
+    #         vals: list of raw values to filter columns on; e.g., [50, 100000].
+    #           These are not bin IDs.
+    #     Returns:
+    #         Predicted cardinality.
+    #     """
+    #     raise NotImplementedError
 
     def OnStart(self):
         self.query_starts.append(time.time())
@@ -130,11 +134,26 @@ def FillInUnqueriedColumns(table, columns, operators, vals):
     os, vs = [None] * ncols, [None] * ncols
 
     for c, o, v in zip(columns, operators, vals):
-        idx = table.ColumnIndex(c.name)
-        os[idx] = o
-        vs[idx] = v
+        if type(c) is str:
+            idx = table.ColumnIndex(c)
+        else:
+            idx = table.ColumnIndex(c.name)
+        if os[idx] is None:
+            os[idx]=[]
+            vs[idx]=[]
+        os[idx].append(o)
+        vs[idx].append(v)
 
     return cs, os, vs
+
+
+def GetTablesInQuery(columns, values):
+    """Returns a set of table names that are joined in a query."""
+    q_tables = set()
+    for col, val in zip(columns, values):
+        if col.name.startswith('__in_') and val == [1]:
+            q_tables.add(col.name[len('__in_'):])
+    return q_tables
 
 
 class ProgressiveSampling(CardEst):
@@ -208,9 +227,11 @@ class ProgressiveSampling(CardEst):
             n = int(self.r * self.table.columns[0].DistributionSize())
         return "psample_{}".format(n)
 
-    def _sample_n(self, num_samples, ordering, columns, operators, vals, inp=None):
+    def _sample_n(self, num_samples, ordering, columns, operators, vals, inp=None, join_idxs=None):
         ncols = len(columns)
         logits = self.init_logits
+        join_key_distributions=dict()
+        
         if inp is None:
             inp = self.inp[:num_samples]
         masked_probs = []
@@ -222,12 +243,18 @@ class ProgressiveSampling(CardEst):
 
             # Column i.
             op = operators[natural_idx]
+            val = vals[natural_idx]
             if op is not None:
                 # There exists a filter.
-
-                valid_i = OPS[op](
-                    columns[natural_idx].all_distinct_values, vals[natural_idx]
-                ).astype(np.float32, copy=False)
+                distinct_values = columns[natural_idx].all_distinct_values
+                valid_i = None
+                for o, v in zip(op, val):
+                    valid=OPS[o](distinct_values, v)
+                    if valid_i is None:
+                        valid_i=valid
+                    else:
+                        valid_i &= valid
+                valid_i=valid_i.astype(np.float32, copy=False)
             else:
                 continue
 
@@ -247,6 +274,7 @@ class ProgressiveSampling(CardEst):
                             out=inp[:, : self.model.input_bins_encoded_cumsum[0]],
                         )
                     else:
+                        # l,r分别代表第i列输入的起始和结束下标
                         l = self.model.input_bins_encoded_cumsum[natural_idx - 1]
                         r = self.model.input_bins_encoded_cumsum[natural_idx]
                         self.model.EncodeInput(
@@ -273,8 +301,12 @@ class ProgressiveSampling(CardEst):
 
                 masked_probs.append(probs_i_summed)
 
+                if join_idxs and natural_idx in join_idxs:
+                    join_key_distributions[natural_idx]=probs_i.mean(0).cpu().numpy()
+
                 # If some paths have vanished (~0 prob), assign some nonzero
                 # mass to the whole row so that multinomial() doesn't complain.
+                
                 paths_vanished = (probs_i_summed <= 0).view(-1, 1)
                 probs_i = probs_i.masked_fill_(paths_vanished, 1.0)
 
@@ -344,7 +376,8 @@ class ProgressiveSampling(CardEst):
                     # If next variable in line is wildcard, then don't do
                     # this forward pass.  Var 'logits' won't be accessed.
                     continue
-
+                
+                # use samples to get probs for next col.
                 if hasattr(self.model, "do_forward"):
                     # With a specific ordering.
                     logits = self.model.do_forward(inp, ordering)
@@ -361,13 +394,17 @@ class ProgressiveSampling(CardEst):
             p *= ls
         p *= masked_probs[0]
 
-        return p.mean().item()
+        return p.mean().item(), join_key_distributions
 
-    def Query(self, columns, operators, vals):
+    def Query(self, columns, operators, vals, join_cols=None):
         # Massages queries into natural order.
         columns, operators, vals = FillInUnqueriedColumns(
             self.table, columns, operators, vals
         )
+
+        join_cols_cardinality=dict()        
+        if join_cols:
+            join_idxs=[self.table.ColumnIndex(join_col) for join_col in join_cols]
 
         # TODO: we can move these attributes to ctor.
         ordering = None
@@ -390,13 +427,26 @@ class ProgressiveSampling(CardEst):
         for natural_idx in range(len(columns)):
             inv_ordering[ordering[natural_idx]] = natural_idx
 
+        if join_idxs:
+            assert len(join_idxs)==1, "Can't support more than 1 keys!"
+            join_idx=join_idxs[0]
+            tmp=ordering[-1]
+            tmp_rank=inv_ordering[join_idx]
+
+            ordering[-1]=join_idx
+            ordering[tmp_rank]=tmp
+
+            inv_ordering[join_idx]=len(columns)-1
+            inv_ordering[tmp]=tmp_rank
+
+
         with torch.no_grad():
             inp_buf = self.inp.zero_()
             # Fast (?) path.
             if num_orderings == 1:
                 ordering = orderings[0]
                 self.OnStart()
-                p = self._sample_n(
+                p, jkd = self._sample_n(
                     self.num_samples,
                     ordering
                     if isinstance(self.model, transformer.Transformer)
@@ -405,27 +455,157 @@ class ProgressiveSampling(CardEst):
                     operators,
                     vals,
                     inp=inp_buf,
+                    join_idxs=join_idxs,
                 )
                 self.OnEnd()
-                return np.ceil(p * self.cardinality).astype(dtype=np.int32, copy=False)
+
+                car = np.ceil(p * self.cardinality).astype(dtype=np.int32, copy=False)
+
+                for join_idx, join_col in zip(join_idxs, join_cols):
+                    value_probs=jkd[join_idx]
+                    value_prob_sum=np.sum(value_probs)
+                    distinct_values=columns[join_idx].all_distinct_values
+
+                    count_table=dict()
+                    for value, value_p in zip(distinct_values, value_probs):
+                        value_car=np.around(car*value_p / value_prob_sum)
+                        count_table[value]=value_car
+                    join_cols_cardinality[join_col]=count_table
+
+                return car, join_cols_cardinality
 
             # Num orderings > 1.
             ps = []
+            jkd = dict()
             self.OnStart()
             for ordering in orderings:
-                p_scalar = self._sample_n(
+                p_scalar, join_key_distribution = self._sample_n(
                     self.num_samples // num_orderings,
                     ordering,
                     columns,
                     operators,
                     vals,
+                    join_idxs=join_idxs,
                 )
                 ps.append(p_scalar)
+                if jkd == None:
+                    for key in join_key_distribution:
+                        jkd[key]=join_key_distribution[key]
+                else:
+                    for key in join_key_distribution:
+                        jkd[key]+=join_key_distribution[key]
             self.OnEnd()
-            return np.ceil(np.mean(ps) * self.cardinality).astype(
-                dtype=np.int32, copy=False
-            )
+            for key in jkd:
+                jkd[key] /= num_orderings
 
+            car = np.ceil(np.mean(ps) * self.cardinality).astype(dtype=np.int32, copy=False)
+
+            for join_idx, join_col in zip(join_idxs, join_cols):
+                value_probs=jkd[join_idx]
+                value_prob_sum=np.sum(value_probs)
+                distinct_values=columns[join_idx].all_distinct_values
+
+                count_table=dict()
+                for value, value_p in zip(distinct_values, value_probs):
+                    value_car=np.around(car*value_p / value_prob_sum)
+                    count_table[value]=value_car
+                join_cols_cardinality[join_col]=count_table
+    
+            return car, join_cols_cardinality
+
+
+class JoinSampling(CardEst):
+    """Deal with join queries"""
+
+    def __init__(self, 
+                 table_dict, 
+                 model_dict, 
+                 r, 
+                 device=None, 
+                 seed=False,
+                 shortcircuit=False,
+                 estimate_type="progressive_sampling",
+    ):
+        super(JoinSampling, self).__init__()
+        self.table_dict = table_dict
+        self.model_dict = model_dict
+        
+        self.seed = seed
+        self.device = device
+        self.shortcircuit = shortcircuit
+
+        self.estimators = dict()
+        self.estimate_type = estimate_type
+        for table in table_dict:
+            if self.estimate_type == "progressive_sampling":
+                self.estimators[table]=ProgressiveSampling(
+                    model=model_dict[table],
+                    table=table_dict[table],
+                    r=r,
+                    device=self.device,
+                    seed=self.seed,
+                    shortcircuit=self.shortcircuit,
+                )
+            elif self.estimate_type == "oracle":
+                self.estimators[table]=Oracle(
+                    table=table_dict[table],
+                )
+
+    def join_estimate(self, table_cardinalities, table_key_distributions, join_cond, table_predicates):
+        cond_car=dict()
+        for cond in join_cond:
+            table1, table2=join_cond[cond]
+            cond_car[cond]=table_cardinalities[table1]+table_cardinalities[table2]
+
+        sorted_conds=sorted(cond_car, key=cond_car.get)
+
+        for i, cond in enumerate(sorted_conds):
+            table1, table2=join_cond[cond]
+            join_key1=cond.split("=")[0].split(".")[-1].strip()
+            join_key2=cond.split("=")[-1].split(".")[-1].strip()
+
+            count_table1=table_key_distributions[table1][join_key1]
+            count_table2=table_key_distributions[table2][join_key2]
+
+            new_count_table=dict()
+            for value in count_table1:
+                if count_table1[value]!=0 and value in count_table2 and count_table2[value]!=0:
+                    new_count_table[value]=count_table1[value]*count_table2[value]
+
+            table_key_distributions[table1][join_key1]=new_count_table
+            table_key_distributions[table2][join_key2]=new_count_table
+
+            if i==len(sorted_conds)-1:
+                cardinality=sum(new_count_table.values())
+
+        return cardinality
+
+    def JoinQuery(self, tables_all, table_predicates, join_cond, log=None):
+        tables=tables_all.values()
+
+        table_cardinalities=dict()
+        table_key_distributions=dict()
+        for table in tables:
+            estimator = self.estimators[table]
+            cols, ops, vals = table_predicates[table]["cols"], table_predicates[table]["ops"], table_predicates[table]["vals"]
+            join_cols = table_predicates[table]["join_keys"]
+            
+            # query_idxs = [estimator.table.ColumnIndex(col) for col in cols]
+            # columns=[estimator.table.columns[idx] for idx in query_idxs]
+            # cardinality, join_key_cardinality=estimator.Query(columns, ops, vals, join_cols)
+            cardinality, join_key_cardinality=estimator.Query(cols, ops, vals, join_cols)
+            
+            log.write(f"{table} cardinality: {cardinality}\n")
+
+            table_cardinalities[table]=cardinality
+            table_key_distributions[table]=join_key_cardinality
+            for key in join_key_cardinality:
+                log.write(f"check {table} distributions: {sum(join_key_cardinality[key].values())}\n")
+
+        join_cardinality = self.join_estimate(table_cardinalities, table_key_distributions, join_cond, table_predicates)
+
+        return join_cardinality
+        
 
 class SampleFromModel(CardEst):
     """Sample from an autoregressive model."""
@@ -522,31 +702,74 @@ class Oracle(CardEst):
     def __str__(self):
         return "oracle"
 
-    def Query(self, columns, operators, vals, return_masks=False):
+    def Query(self, columns, operators, vals, join_cols=None, return_masks=False):
         assert len(columns) == len(operators) == len(vals)
         self.OnStart()
 
         bools = None
+        join_ops = dict()
         for c, o, v in zip(columns, operators, vals):
+            if type(c) is str:
+                idx=self.table.ColumnIndex(c)
+                c=self.table.columns[idx]
             if self.limit_first_n is None:
                 try:
+                    if c.name in join_cols:
+                        join_ops[c.name]=(o, v)
+
                     inds = OPS[o](c.data, v)
+                    if bools is None:
+                        bools = inds
+                    else:
+                        bools &= inds
                 except:
                     print(c, o, v)
                     os.sys.exit()
             else:
                 # For data shifts experiment.
-                inds = OPS[o](c.data[: self.limit_first_n], v)
+                if c.name in join_cols:
+                    join_ops[c.name]=(o, v)
 
-            if bools is None:
-                bools = inds
-            else:
-                bools &= inds
-        c = bools.sum()
+                inds = OPS[o](c.data[: self.limit_first_n], v)
+                if bools is None:
+                    bools = inds
+                else:
+                    bools &= inds
+        if bools is None:
+            c=self.table.cardinality
+        else:
+            c = bools.sum()
+        
+        join_key_cardinality=dict()
+        if join_cols:
+            for join_col in join_cols:
+                join_idx=self.table.ColumnIndex(join_col)
+                join_column = self.table.columns[join_idx]
+                # distinct_values=join_column.all_distinct_values
+                distinct_values, counts = np.unique(join_column.data, return_counts=True)
+
+                if join_col in join_ops:
+                    bools=None
+                    o, v = join_ops[join_col]
+                    bool=OPS[o](distinct_values, v)
+                    if bools is None:
+                        bools = bool
+                    else:
+                        bools &= bool
+                    
+                    counts *= bools.astype(np.float32, copy=False)
+
+                count_table=dict()
+                for value, count in zip(distinct_values, counts):
+                    count_table[value]=count
+
+                join_key_cardinality[join_col]=count_table
+
+
         self.OnEnd()
         if return_masks:
             return bools
-        return c
+        return c, join_key_cardinality
 
 
 class QueryRegionSize(CardEst):
@@ -1473,3 +1696,87 @@ class MaxDiffHistogram(CardEst):
             total_size += p.Size()
         total_size += 24 * (len(self.partitions) - 1)
         return total_size
+
+
+if __name__ == "__main__":
+    import sys
+    import glob
+    sys.path.append("./")
+
+    from update_utils import dataset_util
+    from eval_model import MakeMade 
+    from update_utils.torch_util import get_torch_device
+    from parse_query import parse_query
+    #Only for test
+
+    table_dict=dict()
+    model_dict=dict()
+    table_list=['badges', 'votes', 'postHistory', 'posts', 'users', 'comments', 'postLinks', 'tags']
+    for table_name in table_list:
+        dataset_name="stats_" + table_name
+        table = dataset_util.DatasetLoader.load_dataset(dataset=dataset_name)
+        table_dict[table_name]=table
+        
+        model_path = "./models/*{}*MB-model*-data*-*epochs-seed*.pt".format(dataset_name)
+        model_path = glob.glob(str(model_path))[0]
+        model = MakeMade(
+            scale=256,
+            cols_to_train=table.columns,
+            seed=0,
+            fixed_ordering=None,
+        )
+        print(f"Loading model for {table_name}!")
+        model.load_state_dict(torch.load(model_path))
+        model.eval()
+        model_dict[table_name]=model
+    
+    DEVICE = get_torch_device()
+    psample=500
+
+    join_estimator=JoinSampling(
+        table_dict=table_dict,
+        model_dict=model_dict,
+        r=psample,
+        device=DEVICE,
+        estimate_type="oracle"
+    )
+
+    query_path="/home/kangping/code/End-to-End-CardEst-Benchmark/workloads/stats_CEB/sub_plan_queries/stats_CEB_sub_queries.sql"
+    log_path = "./Naru/checkpoints/log.txt"
+    with open(query_path, "r") as f:
+	    queries = f.readlines()
+
+    with open(log_path, "w") as log_file:
+        qerrors=[]
+        for i, query_str in enumerate(queries):
+            tables_all, table_predicates, join_cond, true_card = parse_query(query_str)
+            log_file.write(f"Query {i+1}:\n{tables_all}\n")
+
+            skip=False
+            for tab in table_predicates:
+                if len(table_predicates[tab]["join_keys"])>1:
+                    skip=True
+            if skip:
+                continue
+
+            cardinality=join_estimator.JoinQuery(tables_all, table_predicates, join_cond, log_file)
+
+            if cardinality==0:
+                cardinality=1
+            if true_card==0:
+                true_card=1
+            qerror=max(cardinality/true_card, true_card/cardinality)
+            qerrors.append(qerror)
+            
+            # print(f"pred card: {cardinality}, true card: {true_card}. Q-error for query {i+1}: {qerror}")
+            log_file.write(f"pred card: {cardinality}, true card: {true_card}. Q-error for query {i+1}: {qerror}\n")
+
+        qerror_message="\n Q-errors:\n mean {:.4f}\n median {:.4f}\n 95th {:.4f}\n 99th {:.4f}\n max {:.4f}\n".format(
+                np.mean(qerrors),
+                np.quantile(qerrors, 0.5),
+                np.quantile(qerrors, 0.95),
+                np.quantile(qerrors, 0.99), 
+                np.max(qerrors))
+        print(qerror_message)
+        log_file.write(qerror_message)
+    print("Query parse finished!")
