@@ -22,6 +22,7 @@ pip install .
 
 ```shell
 # You can run an end-to-end experiment by running this conmmand. Some config examples are stored in ./end2end/configs/. You can choose the config file from this python script
+cd SAUCE/
 python end2end/multi_experiments.py
 ```
 

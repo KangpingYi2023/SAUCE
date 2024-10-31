@@ -2,6 +2,10 @@
 *.pyc
 Naru/checkpoints/
 FACE/checkpoints/
+FactorJoin/checkpoints
+FactorJoin/datasets
+FactorJoin/Postgres
+FactorJoin/pg
 *-sample*.npy
 *power.npy
 FACE/evaluate/oracle/*
