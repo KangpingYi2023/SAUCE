@@ -1,0 +1,35 @@
+bucketizing equivalent key group: {'votes.PostId', 'postHistory.PostId', 'postLinks.RelatedPostId', 'comments.PostId', 'postLinks.PostId', 'tags.ExcerptPostId', 'posts.Id'}
+bucketizing equivalent key group: {'postHistory.UserId', 'users.Id', 'posts.OwnerUserId', 'comments.UserId', 'votes.UserId', 'badges.UserId'}
+badges
+Discretizing table takes 0.024946212768554688 secs
+Structure learning took 0.34896278381347656 secs.
+done, parameter learning took 0.1068258285522461 secs.
+votes
+Discretizing table takes 4.613924980163574 secs
+Structure learning took 1.705061912536621 secs.
+done, parameter learning took 0.15768814086914062 secs.
+postHistory
+Discretizing table takes 0.14506864547729492 secs
+Structure learning took 2.776984214782715 secs.
+done, parameter learning took 0.1489551067352295 secs.
+posts
+Discretizing table takes 0.7612459659576416 secs
+Structure learning took 2.2075228691101074 secs.
+done, parameter learning took 0.17788386344909668 secs.
+users
+Discretizing table takes 3.940335988998413 secs
+Structure learning took 0.6516609191894531 secs.
+done, parameter learning took 0.1302337646484375 secs.
+comments
+Discretizing table takes 0.1428544521331787 secs
+Structure learning took 1.4136149883270264 secs.
+done, parameter learning took 0.16626262664794922 secs.
+postLinks
+Discretizing table takes 0.023090600967407227 secs
+Structure learning took 0.30030322074890137 secs.
+done, parameter learning took 0.12539124488830566 secs.
+tags
+Discretizing table takes 0.01285862922668457 secs
+Structure learning took 0.013895034790039062 secs.
+done, parameter learning took 0.025826454162597656 secs.
+models save at ./checkpoints/update/model_stats_greedy_200.pkl

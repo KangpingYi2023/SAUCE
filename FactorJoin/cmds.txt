@@ -1,0 +1,32 @@
+python send_query.py --dataset stats \
+       --method_name /home/kangping/code/estimates/stats_true_cards.txt \
+       --query_file /home/kangping/code/FactorJoin/workloads/stats_CEB/stats_CEB.sql \
+       --save_folder checkpoints/stats_results/ \
+       --test_type factorjoin
+
+python send_query.py --dataset stats \
+       --method_name /home/kangping/code/estimates/stats_sub_queries_model.txt \
+       --query_file /home/kangping/code/FactorJoin/workloads/stats_CEB/stats_CEB.sql \
+       --save_folder checkpoints/stats_results/ \
+       --test_type factorjoin
+
+python send_query.py --dataset stats \
+       --method_name /home/kangping/code/estimates/stats_true_cards.txt \
+       --query_file /home/kangping/code/FactorJoin/workloads/stats_CEB/stats_CEB.sql \
+       --save_folder checkpoints/stats_results/ \
+       --test_type naive
+
+python send_query.py --dataset imdb \
+       --method_name [method].txt \
+       --query_file /home/kangping/code/FactorJoin/IMDB-JOB/all_queries.sql \
+       --save_folder checkpoints/imdb_results/
+       --test_type factorjoin
+
+python run_experiment.py --dataset stats \
+       --update_evaluate \
+       --data_path datasets/stats_simplified \
+       --model_path checkpoints/update/ \
+       --n_dim_dist 2 \
+       --n_bins 200 \
+       --bucket_method greedy \
+       --split_date '2014-01-01 00:00:00'

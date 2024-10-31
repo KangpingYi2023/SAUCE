@@ -1,0 +1,86 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python 调试程序: 当前文件",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python: FactorJoin",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/run_experiment.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--dataset",
+                "stats",
+                "--evaluate",
+                "--query_file_location",
+                "/home/kangping/code/End-to-End-CardEst-Benchmark/workloads/stats_CEB/sub_plan_queries/stats_CEB_sub_queries.sql",
+                "--model_path",
+                "checkpoints/model_stats_greedy_200.pkl",
+                "--save_folder",
+                "checkpoints/",
+            ]
+        },
+        {
+            "name": "Python: FactorJoin-update",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/run_experiment.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--dataset",
+                "stats",
+                "--update_evaluate",
+                "--data_path",
+                "./datasets/stats_simplified",
+                "--model_path",
+                "checkpoints/update/",
+                "--n_dim_dist",
+                "2",
+                "--n_bins",
+                "200",
+                "--bucket_method",
+                "greedy",
+                "--split_date",
+                "2014-01-01 00:00:00",
+            ]
+        },
+        {
+            "name": "Python: FactorJoin-e2e",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/send_query.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "args": [
+                "--dataset",
+                "stats",
+                "--method_name",
+                "../../../FactorJoin/checkpoints/stats_sub_queries.txt",
+                "--query_file",
+                "../End-to-End-CardEst-Benchmark/workloads/stats_CEB/stats_CEB.sql",
+                "--save_folder",
+                "checkpoints/",
+            ]
+        },
+        {
+            "name": "Python: FactorJoin-e2e_update",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/update_experiment.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            // "args": []
+        }
+    ]
+}
