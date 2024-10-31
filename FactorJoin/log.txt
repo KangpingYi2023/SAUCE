@@ -1,35 +1,35 @@
-bucketizing equivalent key group: {'votes.PostId', 'postHistory.PostId', 'postLinks.RelatedPostId', 'comments.PostId', 'postLinks.PostId', 'tags.ExcerptPostId', 'posts.Id'}
-bucketizing equivalent key group: {'postHistory.UserId', 'users.Id', 'posts.OwnerUserId', 'comments.UserId', 'votes.UserId', 'badges.UserId'}
+bucketizing equivalent key group: {'posts.Id', 'comments.PostId', 'tags.ExcerptPostId', 'postLinks.RelatedPostId', 'votes.PostId', 'postLinks.PostId', 'postHistory.PostId'}
+bucketizing equivalent key group: {'users.Id', 'comments.UserId', 'votes.UserId', 'badges.UserId', 'posts.OwnerUserId', 'postHistory.UserId'}
 badges
-Discretizing table takes 0.024946212768554688 secs
-Structure learning took 0.34896278381347656 secs.
-done, parameter learning took 0.1068258285522461 secs.
+Discretizing table takes 0.027188777923583984 secs
+Structure learning took 0.39087390899658203 secs.
+done, parameter learning took 0.10943198204040527 secs.
 votes
-Discretizing table takes 4.613924980163574 secs
-Structure learning took 1.705061912536621 secs.
-done, parameter learning took 0.15768814086914062 secs.
+Discretizing table takes 4.829129695892334 secs
+Structure learning took 1.7570469379425049 secs.
+done, parameter learning took 0.15868782997131348 secs.
 postHistory
-Discretizing table takes 0.14506864547729492 secs
-Structure learning took 2.776984214782715 secs.
-done, parameter learning took 0.1489551067352295 secs.
+Discretizing table takes 0.19748401641845703 secs
+Structure learning took 2.7663538455963135 secs.
+done, parameter learning took 0.1382131576538086 secs.
 posts
-Discretizing table takes 0.7612459659576416 secs
-Structure learning took 2.2075228691101074 secs.
-done, parameter learning took 0.17788386344909668 secs.
+Discretizing table takes 0.8075814247131348 secs
+Structure learning took 2.2236812114715576 secs.
+done, parameter learning took 0.17964696884155273 secs.
 users
-Discretizing table takes 3.940335988998413 secs
-Structure learning took 0.6516609191894531 secs.
-done, parameter learning took 0.1302337646484375 secs.
+Discretizing table takes 3.992901563644409 secs
+Structure learning took 0.651226282119751 secs.
+done, parameter learning took 0.12875628471374512 secs.
 comments
-Discretizing table takes 0.1428544521331787 secs
-Structure learning took 1.4136149883270264 secs.
-done, parameter learning took 0.16626262664794922 secs.
+Discretizing table takes 0.18919801712036133 secs
+Structure learning took 1.5049469470977783 secs.
+done, parameter learning took 0.17275500297546387 secs.
 postLinks
-Discretizing table takes 0.023090600967407227 secs
-Structure learning took 0.30030322074890137 secs.
-done, parameter learning took 0.12539124488830566 secs.
+Discretizing table takes 0.04646039009094238 secs
+Structure learning took 0.37526369094848633 secs.
+done, parameter learning took 0.13583135604858398 secs.
 tags
-Discretizing table takes 0.01285862922668457 secs
-Structure learning took 0.013895034790039062 secs.
-done, parameter learning took 0.025826454162597656 secs.
+Discretizing table takes 0.02327275276184082 secs
+Structure learning took 0.03304791450500488 secs.
+done, parameter learning took 0.0501711368560791 secs.
 models save at ./checkpoints/update/model_stats_greedy_200.pkl

@@ -92,34 +92,24 @@ def read_origin_data(data_path):
     return origin_data, processed_data, schema
 
 
-def init_pg(dataset):
-    conn_params = {
-        'dbname': dataset,
-        'user': 'kangping',
-        'password': 'kangping',
-        'host': 'localhost',
-        'port': '5432'
-    }
+def update_pg(dataset, table, delta_path):
+    conn = psycopg2.connect(database=dataset, user="kangping", password="kangping", host="localhost", port=5432)
+    cursor = conn.cursor()
 
-    try:
-        conn = psycopg2.connect(**conn_params)
-        conn.autocommit = False 
-    except Exception as e:
-        print(f"error: {e}")
-        conn.rollback()
-
-    return conn
-
-
-def update_pg(table, delta_path, conn):
-    cursor=conn.cursor()
+    # related_path="../../"
+    delta_path=os.path.normpath(delta_path)
+    # delta_path=os.path.join(related_path, delta_path)
     table=table.lower()
     try:
         with open(delta_path, "r") as delta_file:
             cursor.copy_expert(f"COPY {table} FROM STDIN WITH CSV HEADER", delta_file)
+        conn.commit()
     except Exception as e:
         print(f"error: {e}")
         conn.rollback()
+
+    cursor.close()
+    conn.close()
 
 
 def drifts_detection(tables, update_data, raw_data, pool_path="./datasets/stats_simplified_origin/pool/pool_data.pkl"):
@@ -223,7 +213,7 @@ def update_model(FJmodel, model_path, model_update_data):
     # print(f"updated models save at {model_path}")
 
 
-def e2e_update(data_folder, model_path, save_folder, sub_query_file, query_file, update_type="sauce", n_dim_dist=2, bin_size=200, bucket_method="greedy", split_date="2014-01-01 00:00:00", seed=0):
+def e2e_update(data_folder, model_path, pg_folder, sub_query_file, query_file, update_type="sauce", n_dim_dist=2, bin_size=200, bucket_method="greedy", split_date="2014-01-01 00:00:00", seed=0):
     np.random.seed(seed)
     if not os.path.exists(model_path):
         os.mkdir(model_path)
@@ -254,7 +244,6 @@ def e2e_update(data_folder, model_path, save_folder, sub_query_file, query_file,
         else:
             chunk_size[t_name]=0
 
-    db_conn=init_pg("stats")
     latency_all=[]
     for i in range(update_times):
         update_data=dict()
@@ -262,7 +251,7 @@ def e2e_update(data_folder, model_path, save_folder, sub_query_file, query_file,
             t_name = table.table_name
             ch_size=chunk_size[t_name]
             update_filename=f"{t_name}_delta{i+1}.csv"
-            delta_path=os.path.join(data_folder, "update", update_filename)
+            delta_path=os.path.join(pg_folder, "update", update_filename)
             if after_data[t_name] is not None:
                 if i < update_times-1:
                     left=i*ch_size
@@ -275,7 +264,7 @@ def e2e_update(data_folder, model_path, save_folder, sub_query_file, query_file,
                 
                 update_data[t_name]=data_to_model
                 data_to_db.to_csv(delta_path, index=False)
-                update_pg(t_name, delta_path, db_conn)
+                update_pg("stats", t_name, delta_path)
             else:
                 update_data[t_name]=None
         
@@ -296,7 +285,7 @@ def e2e_update(data_folder, model_path, save_folder, sub_query_file, query_file,
                 print(f"Update after {iter}th insertion completed, took {latency} sec")
                 latency_all.append(latency)
 
-        model_evaluate(model_path, sub_query_file, query_file, save_folder, update_type, i+1)
+        model_evaluate(model_path, sub_query_file, query_file, pg_folder, update_type, i+1)
     
     print(f"Total update latency: {np.sum(latency_all)} s")
 
@@ -304,8 +293,8 @@ def e2e_update(data_folder, model_path, save_folder, sub_query_file, query_file,
 if __name__ == "__main__":
     data_folder="./datasets/stats_simplified_origin"
     model_path="./checkpoints/update/"
-    save_folder="pg/"
+    pg_folder="pg/"
     sub_query_file="./workloads/stats_CEB/sub_plan_queries/stats_CEB_sub_queries_10.sql"
     query_file="./workloads/stats_CEB/stats_small.sql"
-    update_type="none"
-    e2e_update(data_folder, model_path, save_folder, sub_query_file, query_file, update_type)
+    update_type="sauce"
+    e2e_update(data_folder, model_path, pg_folder, sub_query_file, query_file, update_type)
