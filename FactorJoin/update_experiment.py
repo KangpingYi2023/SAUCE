@@ -10,9 +10,9 @@ import contextlib
 import sys
 sys.path.append("./")
 from Schemas.stats.schema import gen_stats_light_schema
-from Evaluation.training import train_one_stats, test_trained_BN_on_stats
+from Evaluation.training import train_one_stats, train_one_imdb
 from Evaluation.testing import test_on_stats, test_on_imdb
-from Join_scheme.data_prepare import update_stats_data_online
+from Join_scheme.data_prepare import update_stats_data_online, update_imdb_data_online
 from BayesCard.Models.Bayescard_BN import Bayescard_BN
 from Evaluation.updating import timestamp_transorform
 from send_query import send_query
@@ -24,9 +24,6 @@ def read_table_csv(table_obj, csv_seperator=',', db_name="stats"):
     """
     if db_name == "stats":
         raw_df_rows = pd.read_csv(table_obj.csv_file_location)
-    elif db_name == "ssb":
-        raw_df_rows = pd.read_csv(table_obj.csv_file_location, header=None, escapechar='\\', sep="|",
-                              encoding="ISO-8859-1", quotechar='"')
     else:
         raw_df_rows = pd.read_csv(table_obj.csv_file_location, header=None, escapechar='\\', encoding='utf-8',
                               quotechar='"',
@@ -66,10 +63,40 @@ def get_update_data_by_date(schema, origin_data, processed_data, time_date="2014
     return after_data, after_data_processed
 
 
-def read_origin_data(data_path):
+def init_pg(dataset, schema):
+    conn = psycopg2.connect(database=dataset, user="kangping", password="kangping", host="localhost", port=5432)
+    cursor = conn.cursor()
+
+    try:
+        for table_obj in schema.tables:
+            table_name = table_obj.table_name
+            
+            #delete all data and replace with data file
+            cursor.execute(f"TRUNCATE TABLE {table_name};")
+            with open(table_obj.csv_file_location, "r") as csv_file:
+                cursor.copy_expert(f"COPY {table_name} FROM STDIN WITH CSV HEADER", csv_file)
+            print(f"Table {table_name} init finished!")
+
+        conn.commit()
+
+    except Exception as e:
+        print(f"error: {e}")
+        conn.rollback()
+
+    cursor.close()
+    conn.close()
+
+
+def read_data_and_init_db(dataset, data_path):
     if not data_path.endswith(".csv"):
         data_path += "/{}.csv"
-    schema = gen_stats_light_schema(data_path)
+    if dataset=="stats":
+        schema = gen_stats_light_schema(data_path)
+    elif dataset == "imdb":
+        pass
+    else:
+        raise ValueError(f"Unknown dataset {dataset}!")
+    
     origin_data = dict()
     processed_data=dict()
     for table_obj in schema.tables:
@@ -88,6 +115,8 @@ def read_origin_data(data_path):
                     df_rows[attribute] = new_value
 
         processed_data[table_name] = df_rows
+    
+    init_pg(dataset, schema)
 
     return origin_data, processed_data, schema
 
@@ -142,6 +171,7 @@ def drifts_detection(tables, update_data, raw_data, pool_path="./datasets/stats_
     model_update_data_all=dict()
     new_pool_data_all=dict()
     need_update=False
+    no_update_list=[]
     for table in tables:
         t_name=table.table_name
         raw_data_array=raw_data[t_name].values
@@ -159,7 +189,19 @@ def drifts_detection(tables, update_data, raw_data, pool_path="./datasets/stats_
         else:
             new_data_array=update_data_array
         
-        if is_drift(raw_data_array, new_data_array, threshold=1e-5):
+        threshold_table={
+            "badges":       4.1596e-07,
+            "votes":        2.5882e-06,
+            "postHistory":  6.8901e-07,
+            "posts":        3.0794e-05,
+            "users":        0.0011,
+            "comments":     1.7106e-06,
+            "postLinks":    2.0947e-06,
+            "tags":         0.0010,
+
+        }
+
+        if is_drift(raw_data_array, new_data_array, threshold=threshold_table[t_name]):
             need_update=True
             model_update_data=pd.DataFrame(new_data_array, columns=update_data[t_name].columns)
             model_update_data_all[t_name]=model_update_data
@@ -169,6 +211,7 @@ def drifts_detection(tables, update_data, raw_data, pool_path="./datasets/stats_
             after_update_data=pd.DataFrame(after_update_data_array, columns=raw_data[t_name].columns)
             after_update_data_all[t_name]=after_update_data
         else:
+            no_update_list.append(t_name)
             model_update_data_all[t_name]=None
             if new_data_array is not None:
                 pool_data_new=pd.DataFrame(new_data_array, columns=update_data[t_name].columns)
@@ -176,30 +219,43 @@ def drifts_detection(tables, update_data, raw_data, pool_path="./datasets/stats_
             else:
                 new_pool_data_all[t_name]=None
 
-    pickle.dump(pool_all_tables, open(pool_path, "wb"), pickle.HIGHEST_PROTOCOL)
+    if not no_update_list:
+        print(f"No need for update list: {no_update_list}")
+    pickle.dump(new_pool_data_all, open(pool_path, "wb"), pickle.HIGHEST_PROTOCOL)
 
     return need_update, model_update_data_all, after_update_data_all
 
 
-def model_evaluate(model_path, sub_query_file, query_file, save_folder, update_type, iter):
-    result_path=save_folder+"results/stats_sub_queries.txt"
-    test_on_stats(model_path=model_path, query_file=sub_query_file, save_res=result_path)
+def model_evaluate(dataset, model_path, sub_query_file, query_file, save_folder, update_type, iter):
+    result_path=save_folder+f"results/{dataset}_sub_queries.txt"
+    if dataset=="stats":
+        test_on_stats(model_path=model_path, query_file=sub_query_file, save_res=result_path)
+    elif dataset == "imdb":
+        query_sample_location=save_folder+"binned_cards_{}/"
+        test_on_imdb(model_path, sub_query_file, sub_query_file, query_sample_location=query_sample_location, save_res=result_path)
+    else:
+        raise ValueError(f"Unknown dataset {dataset}!")
 
     related_path="../../"
     latency_path=save_folder + "latency/"
     related_result_path=related_path+result_path
-    send_query(dataset="stats", method_name=related_result_path, query_file=query_file, save_folder=latency_path, update_type=update_type, iteration=iter)
+    send_query(dataset=dataset, method_name=related_result_path, query_file=query_file, save_folder=latency_path, update_type=update_type, iteration=iter)
     # send_query(dataset="stats", method_name=related_result_path, query_file=query_file, save_folder=latency_path, test_type="naive", iteration=iter)
 
 
-def update_model(FJmodel, model_path, model_update_data):
+def update_model(dataset, FJmodel, model_folder, model_path, model_update_data):
     table_buckets = FJmodel.table_buckets
     null_values = FJmodel.null_value
     schema = FJmodel.schema
-    with open(os.path.join(model_path, "buckets.pkl"), "rb") as f:
+    with open(os.path.join(model_folder, "buckets.pkl"), "rb") as f:
         buckets = pickle.load(f)
-    data, table_buckets, null_values = update_stats_data_online(schema, model_path, buckets, table_buckets,
-                                                        null_values, False, model_update_data)
+    if dataset=="stats":
+        data, table_buckets, null_values = update_stats_data_online(schema, model_folder, buckets, table_buckets,
+                                                                    null_values, False, model_update_data)
+    elif dataset=="imdb":
+        data, table_buckets, null_values = update_imdb_data_online(schema, model_folder, buckets, table_buckets,
+                                                                    null_values, False, model_update_data)
+        
     FJmodel.table_buckets = table_buckets
     FJmodel.null_value = null_values
 
@@ -213,28 +269,31 @@ def update_model(FJmodel, model_path, model_update_data):
     # print(f"updated models save at {model_path}")
 
 
-def e2e_update(data_folder, model_path, pg_folder, sub_query_file, query_file, update_type="sauce", n_dim_dist=2, bin_size=200, bucket_method="greedy", split_date="2014-01-01 00:00:00", seed=0):
+def e2e_update(dataset, data_folder, model_folder, pg_folder, sub_query_file, query_file, update_type="sauce", update_times=5, n_dim_dist=2, bin_size=200, bucket_method="greedy", split_date="2014-01-01 00:00:00", seed=0):
     np.random.seed(seed)
-    if not os.path.exists(model_path):
-        os.mkdir(model_path)
+    if not os.path.exists(model_folder):
+        os.mkdir(model_folder)
 
-    origin_data, processed_data, schema=read_origin_data(data_folder)
+    origin_data, processed_data, schema=read_data_and_init_db(dataset, data_folder)
     print("************************************************************")
     print(f"Training the model with data before {split_date}")
     start_time = time.time()
     with open("./log.txt", "w") as log:
         with contextlib.redirect_stdout(log):
-            train_one_stats("stats", data_folder, model_path, n_dim_dist, bin_size, bucket_method, True, actual_data=processed_data)
+            if dataset=="stats":
+                train_one_stats(dataset, data_folder, model_folder, n_dim_dist, bin_size, bucket_method, True, actual_data=processed_data)
+            elif dataset=="imdb":
+                db_conn_kwargs="dbname=imdb user=kangping password=kangping host=127.0.0.1 port=5432"
+                train_one_imdb(data_folder, model_folder, n_dim_dist, bin_size, bucket_method, save_bucket_bins=True, db_conn_kwargs=db_conn_kwargs)
     print(f"training completed, took {time.time() - start_time} sec")
     
     after_data, after_data_processed = get_update_data_by_date(schema, origin_data, processed_data=processed_data, time_date=split_date)
 
     # loading the trained model and buckets
-    with open(os.path.join(model_path, f"model_stats_{bucket_method}_{bin_size}.pkl"), "rb") as f:
+    model_path=os.path.join(model_folder, f"model_stats_{bucket_method}_{bin_size}.pkl")
+    with open(model_path, "rb") as f:
         FJmodel = pickle.load(f)
-    model_path = os.path.join(model_path, f"updated_model_stats_{bucket_method}_{bin_size}.pkl")
 
-    update_times=5
     chunk_size=dict()
     for table in FJmodel.schema.tables:
         t_name = table.table_name
@@ -264,37 +323,45 @@ def e2e_update(data_folder, model_path, pg_folder, sub_query_file, query_file, u
                 
                 update_data[t_name]=data_to_model
                 data_to_db.to_csv(delta_path, index=False)
-                update_pg("stats", t_name, delta_path)
+                update_pg(dataset, t_name, delta_path)
             else:
                 update_data[t_name]=None
         
         if update_type == "none":
             pass
+        elif update_type == "naive":
+            pass
         elif update_type == "always":
             start_time = time.time()
-            update_model(FJmodel, model_path, model_update_data)
+            update_model(dataset, FJmodel, model_folder, model_path, update_data)
             latency = time.time() - start_time
-            print(f"Update after {iter}th insertion completed, took {latency} sec")
+            print(f"Update after {i+1}th insertion completed, took {latency} sec\n")
             latency_all.append(latency)
         elif update_type == "sauce":
             need_update, model_update_data, processed_data = drifts_detection(FJmodel.schema.tables, update_data, processed_data)
             if need_update:
                 start_time = time.time()
-                update_model(FJmodel, model_path, model_update_data)
+                update_model(dataset, FJmodel, model_folder, model_path, model_update_data)
                 latency = time.time() - start_time
-                print(f"Update after {iter}th insertion completed, took {latency} sec")
+                print(f"Update after {i+1}th insertion completed, took {latency} sec\n")
                 latency_all.append(latency)
+        else:
+            raise ValueError(f"Unknown update type '{update_type}'")
 
-        model_evaluate(model_path, sub_query_file, query_file, pg_folder, update_type, i+1)
+        model_evaluate(dataset, model_path, sub_query_file, query_file, pg_folder, update_type, i+1)
     
-    print(f"Total update latency: {np.sum(latency_all)} s")
+    print(f"Total update latency: {np.sum(latency_all)}s\n")
 
 
 if __name__ == "__main__":
+    dataset="stats"
     data_folder="./datasets/stats_simplified_origin"
     model_path="./checkpoints/update/"
     pg_folder="pg/"
-    sub_query_file="./workloads/stats_CEB/sub_plan_queries/stats_CEB_sub_queries_10.sql"
+    sub_query_file="./workloads/stats_CEB/sub_plan_queries/stats_CEB_sub_queries_small.sql"
     query_file="./workloads/stats_CEB/stats_small.sql"
     update_type="sauce"
-    e2e_update(data_folder, model_path, pg_folder, sub_query_file, query_file, update_type)
+    # e2e_update(dataset, data_folder, model_path, pg_folder, sub_query_file, query_file, update_type="naive", update_times=5)
+    # e2e_update(dataset, data_folder, model_path, pg_folder, sub_query_file, query_file, update_type="none", update_times=5)
+    e2e_update(dataset, data_folder, model_path, pg_folder, sub_query_file, query_file, update_type="always", update_times=10)
+    e2e_update(dataset, data_folder, model_path, pg_folder, sub_query_file, query_file, update_type="sauce", update_times=10)

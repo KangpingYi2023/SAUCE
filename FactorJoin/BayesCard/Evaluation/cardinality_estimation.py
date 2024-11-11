@@ -57,6 +57,7 @@ def str_pattern_matching(s):
                 value = value
     return attr.strip(), ops.strip(), value
 
+
 def construct_table_query(BN, table_query, attr, ops, val, epsilon=1e-6):
     if BN is None or attr not in BN.attr_type:
         return None
@@ -147,6 +148,7 @@ def evaluate_card(bn, query_filename='/home/ziniu.wzn/deepdb-public/benchmarks/i
         print(true_card, est)
     return latencies, error
 
+
 def single_table_experiment():
     from Models.Bayescard_BN import Bayescard_BN
     df = pd.read_hdf("/home/ziniu.wzn/imdb-benchmark/gen_single_light/title.hdf")
@@ -174,6 +176,7 @@ def single_table_experiment():
     jt_latency, jt_error = evaluate_card(BN)
     np.save('jt_latency', np.asarray(jt_latency))
     np.save('jt_error', np.asarray(jt_error))
+ 
     
 def evaluate_cardinality(BN_e, schema, query_path, true_cardinalities_path):
     # read all queries

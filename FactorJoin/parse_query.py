@@ -33,25 +33,6 @@ def process_condition(cond, tables_all=None):
     start = None
     join = False
     join_keys = {}
-    
-    '''
-    if ' IN ' in cond:
-        s = cond.split(' IN ')
-        attr = s[0].strip()
-        try:
-            value = list(ast.literal_eval(s[1].strip()))
-        except:
-            temp_value = s[1].strip()[1:][:-1].split(',')
-            value = []
-            for v in temp_value:
-                value.append(v.strip())
-        if tables_all:
-            table = tables_all[attr.split(".")[0].strip()]
-            attr = table + "." + attr.split(".")[-1].strip()
-        else:
-            table = attr.split(".")[0].strip()
-        return table, [attr, 'in', value], join, join_keys
-    '''
 
     for i in range(len(cond)):
         s = cond[i]

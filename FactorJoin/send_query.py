@@ -19,8 +19,10 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None, te
     if test_type=="factorjoin":
         cursor.execute("SET ml_joinest_enabled=true;")
         cursor.execute("SET join_est_no=0;")
-        print(f"Cardinality path: {method_name}")
+        # print(f"Cardinality path: {method_name}")
         cursor.execute(f"SET ml_joinest_fname='{method_name}';")
+    elif test_type == "naive" or update_type == "naive":
+        cursor.execute("SET ml_joinest_enabled=false;")
 
 
     planning_time = [] 
@@ -31,28 +33,29 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None, te
         if warmup:
             cursor.execute("EXPLAIN ANALYZE " + query)
         else:
-            print(f"Executing query {no}")
+            if (no+1)%30==0:
+                print(f"Executing query {no+1}")
             start = time.time()
             cursor.execute("EXPLAIN ANALYZE " + query)
             res = cursor.fetchall()
             planning_time.append(float(res[-2][0].split(":")[-1].split("ms")[0].strip()))
             execution_time.append(float(res[-1][0].split(":")[-1].split("ms")[0].strip()))
             end = time.time()
-            print(f"{no}-th query finished in {end-start}, with planning_time {planning_time[no]} ms and execution_time {execution_time[no]} ms" )
+            # print(f"{no}-th query finished in {end-start}, with planning_time {planning_time[no]} ms and execution_time {execution_time[no]} ms" )
 
     cursor.close()
     conn.close()
     save_file_name = method_name.split(".txt")[0].split("/")[-1]
     if iteration:
-        np.save(save_folder + f"plan_time_{save_file_name}_{test_type}_iter{iteration}", np.asarray(planning_time))
-        np.save(save_folder + f"exec_time_{save_file_name}_{test_type}_iter{iteration}", np.asarray(execution_time))
+        np.save(save_folder + f"plan_time_{save_file_name}_{update_type}_{test_type}_iter{iteration}", np.asarray(planning_time))
+        np.save(save_folder + f"exec_time_{save_file_name}_{update_type}_{test_type}_iter{iteration}", np.asarray(execution_time))
     else:
-        np.save(save_folder + f"plan_time_{save_file_name}_{test_type}", np.asarray(planning_time))
-        np.save(save_folder + f"exec_time_{save_file_name}_{test_type}", np.asarray(execution_time))
+        np.save(save_folder + f"plan_time_{save_file_name}_{update_type}_{test_type}", np.asarray(planning_time))
+        np.save(save_folder + f"exec_time_{save_file_name}_{update_type}_{test_type}", np.asarray(execution_time))
     
-    print(f"Method name: {save_file_name}_{test_type}")
-    print(f"Average planning time: {np.mean(planning_time)} ms")
-    print(f"Average execution time: {np.mean(execution_time)} ms")
+    # print(f"Method name: {save_file_name}_{test_type}")
+    # print(f"Average planning time: {np.mean(planning_time)} ms")
+    # print(f"Average execution time: {np.mean(execution_time)} ms")
 
     total_result_path=save_folder + f"Average_result_{save_file_name}_{update_type}_{test_type}_iter{iteration}.txt"
     with open(total_result_path, "w") as total_file:

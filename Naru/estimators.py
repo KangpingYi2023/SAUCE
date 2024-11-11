@@ -1706,7 +1706,7 @@ if __name__ == "__main__":
     from update_utils import dataset_util
     from eval_model import MakeMade 
     from update_utils.torch_util import get_torch_device
-    from parse_query import parse_query
+    from SAUCE.FactorJoin.parse_query import parse_query
     #Only for test
 
     table_dict=dict()

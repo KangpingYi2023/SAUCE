@@ -36,7 +36,7 @@ class Sampler(ABC):
 class PermuteSampler(Sampler):
     def sample(self, data: np.ndarray):
         self.get_update_size(data)
-        print("Permute - START")
+        # print("Permute - START")
         n_rows, n_cols = data.shape
         samples = np.empty(shape=(self.update_size, n_cols))
 
@@ -48,14 +48,14 @@ class PermuteSampler(Sampler):
             for j, idx in enumerate(idxs):
                 samples[i, j] = data[idx, j]
 
-        print("Permute - END")
+        # print("Permute - END")
         return samples.astype(np.float32)
 
 
 class PermuteOptimizedSampler(Sampler):
     def sample(self, data: np.ndarray):
         self.get_update_size(data)
-        print("Permute - START")
+        # print("Permute - START")
         n_rows, n_cols = data.shape
         samples = np.zeros((self.update_size, n_cols))
 
@@ -65,28 +65,28 @@ class PermuteOptimizedSampler(Sampler):
                 data[:, col], self.update_size, replace=True
             )
 
-        print("Permute - END")
+        # print("Permute - END")
         return samples
 
 
 class SingleSamplingSampler(Sampler):
     def sample(self, data: np.ndarray):
         self.get_update_size(data)
-        print("SingleSample - START")
+        # print("SingleSample - START")
 
         np.random.seed(self.random_seed)
         idx = np.random.randint(data.shape[0])
         sample_idx = [idx] * self.update_size
         sample = data[sample_idx]
 
-        print("SingleSample - END")
+        # print("SingleSample - END")
         return sample
 
 
 class SamplingSampler(Sampler):
     def sample(self, data: np.ndarray):
         self.get_update_size(data)
-        print("Sample - START")
+        # print("Sample - START")
 
         np.random.seed(self.random_seed)
         sample_idx = np.random.choice(
@@ -95,62 +95,55 @@ class SamplingSampler(Sampler):
         sample_idx = np.sort(sample_idx)
         sample = data[sample_idx]
 
-        print("Sample - END")
-        return sample
-
-
-class ValueSamplingSampler(Sampler):
-    def sample(self, data: np.ndarray):
-        self.get_update_size(data)
-        print("ValueSample - START")
-
-        np.random.seed(self.random_seed)
-        row_idx = np.random.choice(range(data.shape[0]))
-        column_idx = np.random.choice(range(data.shape[1]))
-        value = data[row_idx][column_idx]
-        sample_idx = np.random.choice(
-            range(data.shape[0]), size=self.update_size, replace=True
-        )
-        sample_idx = np.sort(sample_idx)
-        sample = data[sample_idx]
-        sample[:, column_idx] = value
-
-        # print(sample[:, column_idx])
-
-        print("ValueSample - END")
+        # print("Sample - END")
         return sample
 
 
 class TupleSkewSampler(Sampler):
+    def __init__(
+            self, update_fraction: float = 0.2, update_size: int = None, random_seed=1234, skew_ratio = None
+    ):
+        super().__init__(update_fraction, update_size, random_seed)
+        self.skew_ratio = skew_ratio
+
     def sample(self, data: np.ndarray):
         self.get_update_size(data)
-        print("TupleSkewSample - START")
+        # print("TupleSkewSample - START")
 
         # skew_ratio=1e-3
-        skew_ratio = float(JsonCommunicator().get('data_updater.skew_ratio'))
-        print(skew_ratio)
+        if self.skew_ratio is None:
+            self.skew_ratio = float(JsonCommunicator().get('data_updater.skew_ratio'))
+        # print(skew_ratio)
         n_rows, n_cols = data.shape
 
         if not self.random_seed == "auto":
             np.random.seed(int(self.random_seed))
-        candidate_idx = np.random.choice(n_rows, size=round(skew_ratio * n_rows), replace=False)
+        candidate_idx = np.random.choice(n_rows, size=round(self.skew_ratio * n_rows), replace=False)
         sample_idx = np.random.choice(candidate_idx, size=self.update_size, replace=True)
         sample_idx = np.sort(sample_idx)
         sample = data[sample_idx]
 
         # print(sample[:, column_idx])
 
-        print("TupleSkewSample - END")
+        # print("TupleSkewSample - END")
         return sample
 
 
 class ValueSkewSampler(Sampler):
+    def __init__(
+            self, update_fraction: float = 0.2, update_size: int = None, random_seed=1234, skew_ratio = None
+    ):
+        super().__init__(update_fraction, update_size, random_seed)
+        self.skew_ratio = skew_ratio
+
     def sample(self, data: np.ndarray):
         self.get_update_size(data)
-        print("ValueSkewSample - START")
+        # print("ValueSkewSample - START")
 
-        skew_ratio = float(JsonCommunicator().get('data_updater.skew_ratio'))
-        print(skew_ratio)
+        if self.skew_ratio is None:
+            self.skew_ratio = float(JsonCommunicator().get('data_updater.skew_ratio'))
+
+        # print(skew_ratio)
         n_rows, n_cols = data.shape
         max_n_cols = n_cols // 3
         min_n_cols = 1
@@ -167,12 +160,12 @@ class ValueSkewSampler(Sampler):
         sample_idx = np.sort(sample_idx)
         samples = data[sample_idx]
         for update_col in update_col_idx:
-            candidate_values = np.random.choice(data[:, update_col], size=round(skew_ratio * n_rows), replace=False)
+            candidate_values = np.random.choice(data[:, update_col], size=round(self.skew_ratio * n_rows), replace=False)
             samples[:, update_col] = np.random.choice(candidate_values, size=self.update_size, replace=True)
 
         # print(sample[:, column_idx])
 
-        print("ValueSkewSample - END")
+        # print("ValueSkewSample - END")
         return samples
 
 
@@ -181,6 +174,7 @@ def create_sampler(
         update_fraction: float = 0.2,
         update_size: int = None,
         random_seed=1234,
+        skew_ratio=None,
 ) -> Sampler:
     if sampler_type == "sample":
         return SamplingSampler(
@@ -189,25 +183,7 @@ def create_sampler(
             random_seed=random_seed,
         )
     if sampler_type == "permute":
-        return PermuteSampler(
-            update_fraction=update_fraction,
-            update_size=update_size,
-            random_seed=random_seed,
-        )
-    if sampler_type == "permute-opt":
         return PermuteOptimizedSampler(
-            update_fraction=update_fraction,
-            update_size=update_size,
-            random_seed=random_seed,
-        )
-    if sampler_type == "single":
-        return SingleSamplingSampler(
-            update_fraction=update_fraction,
-            update_size=update_size,
-            random_seed=random_seed,
-        )
-    if sampler_type == "value":
-        return ValueSamplingSampler(
             update_fraction=update_fraction,
             update_size=update_size,
             random_seed=random_seed,
@@ -217,12 +193,14 @@ def create_sampler(
             update_fraction=update_fraction,
             update_size=update_size,
             random_seed=random_seed,
+            skew_ratio=skew_ratio,
         )
     if sampler_type == "valueskew":
-        return ValueSamplingSampler(
+        return ValueSkewSampler(
             update_fraction=update_fraction,
             update_size=update_size,
             random_seed=random_seed,
+            skew_ratio=skew_ratio,
         )
     raise ValueError(f"Unknown sampler type: {sampler_type}")
 
@@ -259,7 +237,7 @@ class DataUpdater:
             update_fraction: float = None,
             update_size: int = None,
             random_seed=1234,
-    ) -> tuple[np.ndarray, np.ndarray]:
+    ):
         """Read the current dataset from the original path, update it, and save the updated dataset to a new path."""
         # Load the current dataset from the original path
         raw_data = np.load(raw_dataset_path, allow_pickle=True)  # Original data
@@ -310,7 +288,7 @@ if __name__ == "__main__":
         # SamplingSampler(update_fraction=0.2),
         # ValueSamplingSampler(update_fraction=0.2),
         # TupleSkewSampler(update_fraction=0.2)
-        ValueSamplingSampler(update_fraction=0.2)
+        ValueSkewSampler(update_fraction=0.2)
     ]
 
     # updater

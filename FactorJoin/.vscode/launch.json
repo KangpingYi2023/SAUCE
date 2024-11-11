@@ -81,6 +81,15 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             // "args": []
+        },
+        {
+            "name": "Python: FactorJoin-threshold",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/detect_threshold_setting.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            // "args": []
         }
     ]
 }

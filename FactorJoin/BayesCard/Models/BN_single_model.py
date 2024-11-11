@@ -332,9 +332,9 @@ class BN_Single():
         t = time.time()
         if not discretized:
             discrete_table = self.build_discrete_table(dataset, id_attributes, n_mcv, n_bins, drop_na, ignore_cols)
-            logger.info(f'Discretizing table takes {time.time() - t} secs')
-            logger.info(f'Learning BN optimal structure from data with {self.nrows} rows and'
-                        f' {len(self.node_names)} cols')
+            # logger.info(f'Discretizing table takes {time.time() - t} secs')
+            # logger.info(f'Learning BN optimal structure from data with {self.nrows} rows and'
+            #             f' {len(self.node_names)} cols')
             print(f'Discretizing table takes {time.time() - t} secs')
         t = time.time()
         if len(discrete_table) <= rows_to_use:
@@ -351,7 +351,7 @@ class BN_Single():
                                                          max_parents=max_parents,
                                                          n_jobs=n_jobs,
                                                          root=self.root)
-        logger.info(f'Structure learning took {time.time() - t} secs.')
+        # logger.info(f'Structure learning took {time.time() - t} secs.')
         print(f'Structure learning took {time.time() - t} secs.')
 
         self.structure = model.structure

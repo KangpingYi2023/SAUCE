@@ -12,7 +12,7 @@ from Schemas.ssb.schema import gen_1gb_ssb_schema
 from Join_scheme.binning import identify_key_values, sub_optimal_bucketize, greedy_bucketize, \
                                 fixed_start_key_bucketize, get_start_key, naive_bucketize, \
                                 Table_bucket, update_bins, apply_binning_to_data_value_count
-from Join_scheme.bound import Factor
+from Join_scheme.factor import Factor
 
 logger = logging.getLogger(__name__)
 
@@ -477,7 +477,7 @@ def update_stats_data_online(schema, model_folder, buckets, table_buckets, null_
     all_bin_modes = dict()
     all_binned_data = dict()
     for PK in equivalent_keys:
-        print(f"updating equivalent key group:", equivalent_keys[PK])
+        # print(f"updating equivalent key group:", equivalent_keys[PK])
         binned_data, new_bin_modes = update_bins(buckets[PK], key_data, equivalent_keys[PK])
         all_binned_data.update(binned_data)
         all_bin_modes.update(new_bin_modes)
@@ -648,3 +648,74 @@ def process_imdb_data(data_path, model_folder, n_bins, bucket_method, sample_siz
             pickle.dump(equivalent_keys, f, pickle.HIGHEST_PROTOCOL)
 
     return schema, table_buckets, ground_truth_factors_no_filter, optimal_buckets, equivalent_keys
+
+
+def update_imdb_data_online(schema, model_folder, buckets, table_buckets, null_values=None,
+                      save_bucket_bins=False, data=None):
+    all_keys, equivalent_keys = identify_key_values(schema)
+    if data is None:
+        data = dict()
+    key_data = dict()  # store the columns of all keys
+    sample_rate = dict()
+    primary_keys = []
+    if null_values is None:
+        null_values = dict()
+    key_attrs = dict()
+    for table_obj in schema.tables:
+        table_name = table_obj.table_name
+        if table_name not in null_values:
+            null_values[table_name] = dict()
+        key_attrs[table_name] = []
+        
+        assert table_name in data, f"Table {table_name} Not Found!"
+        df_rows = data[table_name]
+        if df_rows is None or len(df_rows) == 0:
+            print(f"{table_name} does not have data to update")
+            continue
+
+        for attr in df_rows.columns:
+            if attr in all_keys:
+                key_data[attr] = df_rows[attr].values
+                # the nan value of id are set to -1, this is hardcoded.
+                key_data[attr][np.isnan(key_data[attr])] = -1
+                key_data[attr][key_data[attr] < 0] = -1
+                null_values[table_name][attr] = -1
+                key_data[attr] = copy.deepcopy(key_data[attr])[key_data[attr] >= 0]
+                # if the all keys have exactly one appearance, we consider them primary keys
+                # we set a error margin of 0.01 in case of data mis-write.
+                if len(np.unique(key_data[attr])) >= len(key_data[attr]) * 0.99:
+                    primary_keys.append(attr)
+                sample_rate[attr] = 1.0
+                key_attrs[table_name].append(attr)
+            else:
+                temp = df_rows[attr].values
+                if attr not in null_values[table_name]:
+                    null_values[table_name][attr] = np.nanmin(temp) - 100
+                temp[np.isnan(temp)] = null_values[table_name][attr]
+        data[table_name] = df_rows
+
+    all_bin_modes = dict()
+    all_binned_data = dict()
+    for PK in equivalent_keys:
+        # print(f"updating equivalent key group:", equivalent_keys[PK])
+        binned_data, new_bin_modes = update_bins(buckets[PK], key_data, equivalent_keys[PK])
+        all_binned_data.update(binned_data)
+        all_bin_modes.update(new_bin_modes)
+
+    for K in all_binned_data:
+        temp_table_name = K.split(".")[0]
+        temp = copy.deepcopy(data[temp_table_name][K].values)
+        temp[temp >= 0] = all_binned_data[K]
+        all_binned_data[K] = temp
+
+    new_table_buckets = update_table_buckets(buckets, data, all_binned_data, all_bin_modes, table_buckets)
+
+    for K in all_binned_data:
+        temp_table_name = K.split(".")[0]
+        data[temp_table_name][K] = all_binned_data[K]
+
+    if save_bucket_bins:
+        with open(model_folder + f"buckets.pkl", "wb") as f:
+            pickle.dump(buckets, f, pickle.HIGHEST_PROTOCOL)
+
+    return data, new_table_buckets, null_values

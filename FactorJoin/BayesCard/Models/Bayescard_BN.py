@@ -91,11 +91,12 @@ class Bayescard_BN(BN_Single):
             if not parents:
                 orphans.append(self.node_names[i])
         if self.debug:
-            logger.info(f"Model spec{spec}")
+            pass
+            # logger.info(f"Model spec{spec}")
         self.model = BayesianModel(spec)
         for o in orphans:
             self.model.add_node(o)
-        logger.info('calling pgm.BayesianModel.fit...')
+        # logger.info('calling pgm.BayesianModel.fit...')
         t = time.time()
         self.model.fit(discrete_table)
         if algorithm == "junction":
@@ -106,8 +107,8 @@ class Bayescard_BN(BN_Single):
                 logger.warning(
                     "This BN is not able to transform into junction tree, probably because "
                     "it's not connected, just use BN")
-        logger.info(f"done, took {time.time() - t} secs.")
-        print(f"done, parameter learning took {time.time() - t} secs.")
+        # logger.info(f"done, took {time.time() - t} secs.")
+        # print(f"done, parameter learning took {time.time() - t} secs.")
         self.legitimacy_check()
         #self.init_inference_method()
 
@@ -144,7 +145,7 @@ class Bayescard_BN(BN_Single):
         self.mapping_update = copy.deepcopy(self.mapping)
 
         discrete_table = self.process_update_dataset(dataset)
-        print(f"Discretizing table took {time.time() - t} secs.")
+        # print(f"Discretizing table took {time.time() - t} secs.")
         t = time.time()
         incremental_model = copy.deepcopy(self.model)
         incremental_model.fit(discrete_table)
@@ -164,7 +165,7 @@ class Bayescard_BN(BN_Single):
         self.n_in_bin = self.n_in_bin_update
         self.legitimacy_check()
 
-        print(f"done, incremental parameter updating took {time.time() - t} secs.")
+        # print(f"done, incremental parameter updating took {time.time() - t} secs.")
         self.init_inference_method()
 
     def update_cpd_table(self, old_cpd, new_cpd):

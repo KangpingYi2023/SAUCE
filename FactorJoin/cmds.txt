@@ -30,3 +30,11 @@ python run_experiment.py --dataset stats \
        --n_bins 200 \
        --bucket_method greedy \
        --split_date '2014-01-01 00:00:00'
+
+python run_experiment.py --dataset stats \
+       --generate_models \
+       --data_path ./datasets/stats_simplified/{}.csv \
+       --model_path checkpoints/ \
+       --n_dim_dist 2 \
+       --n_bins 200 \
+       --bucket_method greedy

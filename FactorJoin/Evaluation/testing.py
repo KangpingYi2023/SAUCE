@@ -40,11 +40,12 @@ def test_on_stats(model_path, query_file, save_res=None):
 		qerror.append(max(res/true_card, true_card/res))
 
 	qerror = np.asarray(qerror)
-	print(f" q-error mean is {np.mean(qerror)}")
-	for i in [50, 90, 95, 99, 100]:
-		print(f"q-error {i}% percentile is {np.percentile(qerror, i)}")
-	print(f"average latency per query is {np.mean(latency)}")
-	print(f"total estimation time is {np.sum(latency)}")
+	print(f"q-error mean is {np.mean(qerror)}")
+	print(f"q-error 50% percentile is {np.percentile(qerror, 50)}")
+	# for i in [50, 90, 95, 99, 100]:
+	# 	print(f"q-error {i}% percentile is {np.percentile(qerror, i)}")
+	print(f"average latency per query is {np.mean(latency)}s")
+	print(f"total estimation time is {np.sum(latency)}s")
 
 	if save_res:
 		with open(save_res, "w") as f:
