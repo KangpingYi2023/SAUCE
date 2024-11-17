@@ -1,4 +1,5 @@
 import sys
+import math
 from abc import ABC, abstractmethod
 from pathlib import Path
 
@@ -118,7 +119,7 @@ class TupleSkewSampler(Sampler):
 
         if not self.random_seed == "auto":
             np.random.seed(int(self.random_seed))
-        candidate_idx = np.random.choice(n_rows, size=round(self.skew_ratio * n_rows), replace=False)
+        candidate_idx = np.random.choice(n_rows, size=math.ceil(self.skew_ratio * n_rows), replace=False)
         sample_idx = np.random.choice(candidate_idx, size=self.update_size, replace=True)
         sample_idx = np.sort(sample_idx)
         sample = data[sample_idx]

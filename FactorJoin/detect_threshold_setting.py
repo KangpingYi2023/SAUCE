@@ -25,9 +25,9 @@ OPS = {
 
 
 MIN_MAX_Qerrors = {
-    'badges':       {"mean": 2.12, "median": 2.1},
-    'votes':        {"mean": 25, "median": 6},
-    'postHistory':  {"mean": 12, "median": 5},
+    'badges':       {"mean": 2, "median": 2.012},
+    'votes':        {"mean": 25, "median": 5},
+    'postHistory':  {"mean": 12, "median": 4},
     'posts':        {"mean": 8, "median": 3.5},
     'users':        {"mean": 5, "median": 3},
     'comments':     {"mean": 7, "median": 4},
@@ -38,7 +38,7 @@ MIN_MAX_Qerrors = {
 
 sample_lib=["permute", "tupleskew", "valueskew"]
 fraction_range=[0.1, 0.3]
-skew_ratio_lib=[1e-1, 1e-2, 1e-3]
+skew_ratio_lib=[1e-2, 1e-3, 1e-4]
 
 
 def str_pattern_matching(s):
@@ -155,6 +155,55 @@ def parse_query_single_table(query, BN, table_name):
     return result
 
 
+def get_groundtruth_generated_query(cols, ops, vals, raw_data, col_idxs):
+    bools=None
+    for col, op, val in zip(cols, ops, vals):
+        col_data=raw_data[col_idxs[col]]
+        filter=OPS[op](col_data, val)
+        if bools is None:
+            bools = filter
+        else:
+            bools *= filter
+    cardinality = bools.sum()
+
+    return cardinality
+
+
+def generate_query_single_table(columns, updated_data, BN, rng):
+    result = dict()
+    col_idxs={col: idx for idx, col in enumerate(columns)}
+    n_predicates=rng.randint(1, len(columns))
+
+    conti=True
+    while conti:
+        cols=rng.choice(columns, size=n_predicates, replace=True)
+        ops=[]
+        vals=[]
+        for i in range(n_predicates):
+            col=cols[i]
+            if BN.attr_type[col] == 'continuous':
+                op=rng.choice(list(OPS.keys()))
+                ops.append(op)
+                all_values=updated_data[col_idxs[col]]
+                val=rng.choice(all_values)
+                vals.append(val)
+            else:
+                op="="
+                ops.append("=")
+                all_values=updated_data[col_idxs[col]]
+                val=rng.choice(all_values)
+                vals.append(val)
+
+            construct_table_query(BN, result, col, op, val)
+        
+        true_card=get_groundtruth_generated_query(cols, ops, vals, updated_data, col_idxs)
+
+        if true_card != 0:
+            conti=False
+
+    return result, true_card
+
+
 def read_table_csv(table_obj, csv_seperator=',', db_name="stats"):
     """
     Reads csv from path, renames columns and drops unnecessary columns
@@ -174,7 +223,7 @@ def read_table_csv(table_obj, csv_seperator=',', db_name="stats"):
     return df_rows.apply(pd.to_numeric, errors="ignore")
 
 
-def get_groundtruth(query, table_obj, raw_data):
+def get_groundtruth(query, table_obj, raw_data, col_idxs):
     if "WHERE" not in query:
         return table_obj.table_size
     else:
@@ -188,7 +237,8 @@ def get_groundtruth(query, table_obj, raw_data):
                 value = timestamp_transorform(value.strip().split("::timestamp")[0])
             
             # row_data=df_rows[attr].values
-            filter=OPS[ops](raw_data, value)
+            col_data=raw_data[col_idxs[attr]]
+            filter=OPS[ops](col_data, value)
             if bools is None:
                 bools = filter
             else:
@@ -243,17 +293,26 @@ def divide_workloads_by_table(queries_str):
     return workloads
 
 
-def bootstrap_single_table(table_obj, raw_data, bn, workload, output_path):
+def bootstrap_single_table(table_obj, df_rows, bn, workload, output_path, bootstrap=3000, skip=False):
     t_name=table_obj.table_name
+    raw_data=df_rows.values
+    col_idxs={col: idx for idx, col in enumerate(df_rows.columns)}
+    if skip and os.path.exists(output_path):
+        now_samples=pd.read_csv(output_path)
+        if now_samples.shape[0] >= bootstrap:
+            print(f"No need for new samples on table {t_name}")
+            return 
+
     distance_all=[]
     qerror_median_all=[]
     qerror_mean_all=[]
     for i in range(bootstrap):
         sampler_type=np.random.choice(sample_lib)
-        update_fraction=np.random.uniform(fraction_range[0], fraction_range[1])
+        # update_fraction=np.random.uniform(fraction_range[0], fraction_range[1])
+        update_fraction=0.2
         skew_ratio=np.random.choice(skew_ratio_lib)
 
-        sampler=create_sampler(sampler_type=sampler_type, update_fraction=update_fraction, skew_ratio=skew_ratio)
+        sampler=create_sampler(sampler_type=sampler_type, update_fraction=update_fraction, skew_ratio=skew_ratio, random_seed=i+1)
         data_updater=DataUpdater(raw_data, sampler)
         data_updater.update_data()
         updated_data=data_updater.get_updated_data()       
@@ -262,18 +321,33 @@ def bootstrap_single_table(table_obj, raw_data, bn, workload, output_path):
         distance_all.append(distance)
 
         qerrors=[]
-        for query in workload:
-            table_query = parse_query_single_table(query, bn, t_name)
+        # for query in workload:
+        #     table_query = parse_query_single_table(query, bn, t_name)
+        #     prob, __ = bn.query(table_query, return_prob=True)
+        #     pred = prob * updated_data.size
+        #     if isinstance(pred, np.ndarray):
+        #         pred = pred.item()
+        #     true_card = get_groundtruth(query, table_obj, updated_data, col_idxs)
+
+        #     if pred == 0:
+        #         pred=1
+        #     if true_card == 0:
+        #         true_card=1
+
+        #     qerror = max(pred / true_card, true_card / pred)
+        #     qerrors.append(qerror)
+
+        num_queries=50
+        rng=np.random.RandomState(1234)
+        for i in range(num_queries):
+            table_query, true_card=generate_query_single_table(df_rows.columns, updated_data, bn, rng) 
             prob, __ = bn.query(table_query, return_prob=True)
             pred = prob * updated_data.size
             if isinstance(pred, np.ndarray):
                 pred = pred.item()
-            true_card = get_groundtruth(query, table_obj, updated_data)
 
             if pred == 0:
                 pred=1
-            if true_card == 0:
-                true_card=1
 
             qerror = max(pred / true_card, true_card / pred)
             qerrors.append(qerror)
@@ -298,7 +372,7 @@ def bootstrap_single_table(table_obj, raw_data, bn, workload, output_path):
     df.to_csv(output_path, index=False)
 
 
-def analyze_threshold(table, save_path, FP=1e-2, min_max_mean_qerror=3, min_max_median_qerror=3):
+def analyze_threshold(table, save_path, FP=5e-2, min_max_mean_qerror=3, min_max_median_qerror=3):
     df_raw=pd.read_csv(save_path)
 
     df_filtered_by_median=df_raw[df_raw["qerror_medians"]>min_max_median_qerror]
@@ -313,16 +387,21 @@ def analyze_threshold(table, save_path, FP=1e-2, min_max_mean_qerror=3, min_max_
 
 
 def analyze_all_tables(bound_ensemble, workloads):
+    bootstrap=3000
+    skip=False
     thres_by_mean_all=dict()
     thres_by_median_all=dict()
     for table_obj in bound_ensemble.schema.tables:
         t_name=table_obj.table_name
+        # attrs=table_obj.attributes
         bn=bound_ensemble.bns[t_name]
         df_rows=read_table_csv(table_obj, db_name="stats")
+        # print(df_rows.columns)
+        # df_rows=df_rows[attrs]
         raw_data=df_rows.values
 
         output_path=os.path.join(output_folder, f"{t_name}_threshold_boostrap.csv")
-        # bootstrap_single_table(table_obj, raw_data, bn, workloads[t_name], output_path)
+        bootstrap_single_table(table_obj, df_rows, bn, workloads[t_name], output_path, bootstrap, skip)
         mmq_mean=MIN_MAX_Qerrors[t_name]["mean"]
         mmq_median=MIN_MAX_Qerrors[t_name]["median"]
         thres_by_median, thres_by_mean = analyze_threshold(t_name, output_path, FP=5e-2, min_max_mean_qerror=mmq_mean, min_max_median_qerror=mmq_median)
@@ -338,7 +417,6 @@ if __name__ == "__main__":
     model_path="./checkpoints/model_stats_greedy_200.pkl"
     query_path="./workloads/stats_CEB/sub_plan_queries/stats_CEB_single_table_sub_query.sql"
     output_folder="./checkpoints/bootstrap"
-    bootstrap=1000
 
     with open(model_path, "rb") as mf:
         bound_ensemble = pickle.load(mf)
