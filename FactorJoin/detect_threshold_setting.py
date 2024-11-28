@@ -170,12 +170,12 @@ def get_groundtruth_generated_query(cols, ops, vals, raw_data, col_idxs):
 
 
 def generate_query_single_table(columns, updated_data, BN, rng):
-    result = dict()
     col_idxs={col: idx for idx, col in enumerate(columns)}
     n_predicates=rng.randint(1, len(columns))
 
     conti=True
     while conti:
+        result = dict()
         cols=rng.choice(columns, size=n_predicates, replace=True)
         ops=[]
         vals=[]
@@ -337,7 +337,7 @@ def bootstrap_single_table(table_obj, df_rows, bn, workload, output_path, bootst
         #     qerror = max(pred / true_card, true_card / pred)
         #     qerrors.append(qerror)
 
-        num_queries=50
+        num_queries=100
         rng=np.random.RandomState(1234)
         for i in range(num_queries):
             table_query, true_card=generate_query_single_table(df_rows.columns, updated_data, bn, rng) 

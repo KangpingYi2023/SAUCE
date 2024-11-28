@@ -18,7 +18,7 @@ cd ./FACE/torchquadMy
 pip install .
 ```
 
-### End-to-end experiments for each datasets
+### Continuous update experiments for each datasets
 
 ```shell
 # You can run an end-to-end experiment by running this conmmand. Some config examples are stored in ./end2end/configs/. You can choose the config file from this python script
@@ -32,4 +32,14 @@ Experimental results will be shown in the following folds:
 
 - The detailed experiment records will be shown in ./end2end/experiment-records
 - The overall performance will be shown in ./end2end/parsed-records
-- The q-errors of each query workloads will be shown in ./end2end/end2end-evaluations
+- The q-errors of each query workload will be shown in ./end2end/end2end-evaluations
+
+## End-to-end update experiment
+
+To execute the end-to-end update experiment, you need to create a new Anaconda environment by following the instructions in the README file located in the ./FactorJoin directory.
+
+```shell
+# You can run an end-to-end experiment by running this conmmand. 
+cd FactorJoin/
+python update_experiment.py
+```

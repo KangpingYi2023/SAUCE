@@ -358,12 +358,12 @@ if __name__ == "__main__":
     data_folder="./datasets/stats_simplified_origin"
     model_path="./checkpoints/update/"
     pg_folder="pg/"
-    # sub_query_file="./workloads/stats_CEB/sub_plan_queries/stats_CEB_sub_queries_small.sql"
-    sub_query_file="./workloads/stats_CEB/sub_plan_queries/stats_CEB_sub_queries_light.sql"
-    # query_file="./workloads/stats_CEB/stats_small.sql"
-    query_file="./workloads/stats_CEB/stats_light.sql"
+    sub_query_file="./workloads/stats_CEB/sub_plan_queries/stats_CEB_sub_queries_small.sql"
+    # sub_query_file="./workloads/stats_CEB/sub_plan_queries/stats_CEB_sub_queries_light.sql"
+    query_file="./workloads/stats_CEB/stats_small.sql"
+    # query_file="./workloads/stats_CEB/stats_light.sql"
     update_type="sauce"
-    e2e_update(dataset, data_folder, model_path, pg_folder, sub_query_file, query_file, update_type="naive", update_times=7)
-    e2e_update(dataset, data_folder, model_path, pg_folder, sub_query_file, query_file, update_type="none", update_times=7)
+    # e2e_update(dataset, data_folder, model_path, pg_folder, sub_query_file, query_file, update_type="naive", update_times=7)
+    # e2e_update(dataset, data_folder, model_path, pg_folder, sub_query_file, query_file, update_type="none", update_times=7)
     e2e_update(dataset, data_folder, model_path, pg_folder, sub_query_file, query_file, update_type="always", update_times=7)
     e2e_update(dataset, data_folder, model_path, pg_folder, sub_query_file, query_file, update_type="sauce", update_times=7)

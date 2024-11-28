@@ -57,7 +57,6 @@ def str_pattern_matching(s):
                 value = value
     return attr.strip(), ops.strip(), value
 
-
 def construct_table_query(BN, table_query, attr, ops, val, epsilon=1e-6):
     if BN is None or attr not in BN.attr_type:
         return None
@@ -87,7 +86,7 @@ def construct_table_query(BN, table_query, attr, ops, val, epsilon=1e-6):
         attr_domain = BN.domain[attr]
         if type(attr_domain[0]) != str:
             attr_domain = np.asarray(attr_domain)
-        if ops == "in":
+        if ops == "in" or ops == "IN":
             assert type(val) == list, "use list for in query"
             query_domain = val
         elif ops == "=" or ops == "==":
@@ -102,6 +101,9 @@ def construct_table_query(BN, table_query, attr, ops, val, epsilon=1e-6):
                 assert (type(val) == int or type(val) == float)
             operater = OPS[ops]
             query_domain = list(attr_domain[operater(attr_domain, val)])
+            if len(query_domain) == 0:
+                # nothing satisfies this query
+                return None
 
         if attr not in table_query:
             table_query[attr] = query_domain
@@ -119,9 +121,11 @@ def timestamp_transorform(time_string, start_date="2010-07-19 00:00:00"):
 
 
 def parse_query_single_table(query, BN):
-    useful = query.split(' WHERE ')[-1].strip()
     result = dict()
-    if 'AND' not in useful:
+    if ' WHERE ' not in query:
+        return result
+    useful = query.split(' WHERE ')[-1].strip(';').strip()
+    if len(useful) == 0:
         return result
     for sub_query in useful.split(' AND '):
         attr, ops, value = str_pattern_matching(sub_query.strip())
@@ -147,7 +151,6 @@ def evaluate_card(bn, query_filename='/home/ziniu.wzn/deepdb-public/benchmarks/i
         error = max(est / true_card, true_card / est)
         print(true_card, est)
     return latencies, error
-
 
 def single_table_experiment():
     from Models.Bayescard_BN import Bayescard_BN
@@ -176,7 +179,6 @@ def single_table_experiment():
     jt_latency, jt_error = evaluate_card(BN)
     np.save('jt_latency', np.asarray(jt_latency))
     np.save('jt_error', np.asarray(jt_error))
- 
     
 def evaluate_cardinality(BN_e, schema, query_path, true_cardinalities_path):
     # read all queries

@@ -1,27 +1,27 @@
-bucketizing equivalent key group: {'postHistory.PostId', 'posts.Id', 'postLinks.PostId', 'tags.ExcerptPostId', 'votes.PostId', 'comments.PostId', 'postLinks.RelatedPostId'}
-bucketizing equivalent key group: {'postHistory.UserId', 'posts.OwnerUserId', 'comments.UserId', 'votes.UserId', 'badges.UserId', 'users.Id'}
+bucketizing equivalent key group: {'comments.PostId', 'votes.PostId', 'posts.Id', 'tags.ExcerptPostId', 'postHistory.PostId', 'postLinks.RelatedPostId', 'postLinks.PostId'}
+bucketizing equivalent key group: {'votes.UserId', 'comments.UserId', 'posts.OwnerUserId', 'postHistory.UserId', 'users.Id', 'badges.UserId'}
 badges
-Discretizing table takes 0.017912864685058594 secs
-Structure learning took 0.35622477531433105 secs.
+Discretizing table takes 0.01914191246032715 secs
+Structure learning took 0.38617467880249023 secs.
 votes
-Discretizing table takes 2.417963981628418 secs
-Structure learning took 1.7082252502441406 secs.
+Discretizing table takes 2.561077833175659 secs
+Structure learning took 1.835212230682373 secs.
 postHistory
-Discretizing table takes 0.16953563690185547 secs
-Structure learning took 2.70635986328125 secs.
+Discretizing table takes 0.1537182331085205 secs
+Structure learning took 2.9039084911346436 secs.
 posts
-Discretizing table takes 0.3936312198638916 secs
-Structure learning took 2.1494295597076416 secs.
+Discretizing table takes 0.4090254306793213 secs
+Structure learning took 2.290813684463501 secs.
 users
-Discretizing table takes 1.6621482372283936 secs
-Structure learning took 0.6928091049194336 secs.
+Discretizing table takes 1.6799120903015137 secs
+Structure learning took 0.6714401245117188 secs.
 comments
-Discretizing table takes 0.136491060256958 secs
-Structure learning took 1.4274156093597412 secs.
+Discretizing table takes 0.13386774063110352 secs
+Structure learning took 1.4920222759246826 secs.
 postLinks
-Discretizing table takes 0.020002365112304688 secs
-Structure learning took 0.33957552909851074 secs.
+Discretizing table takes 0.01958179473876953 secs
+Structure learning took 0.34400200843811035 secs.
 tags
-Discretizing table takes 0.011343002319335938 secs
-Structure learning took 0.02635359764099121 secs.
+Discretizing table takes 0.01115107536315918 secs
+Structure learning took 0.024712800979614258 secs.
 models save at ./checkpoints/update/model_stats_greedy_200.pkl
