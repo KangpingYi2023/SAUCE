@@ -1,6 +1,7 @@
 .idea/*
 *.pyc
 *.txt
+*.pt
 Naru/checkpoints/
 FACE/checkpoints/
 FactorJoin/checkpoints/
