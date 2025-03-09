@@ -29,7 +29,7 @@ from update_utils.torch_util import get_torch_device
 from update_utils.EMA import EMA
 
 
-DEVICE = get_torch_device()
+DEVICE = get_torch_device(extra=True)
 
 LR_transformer=3e-3
 LR_Naru=4e-3
@@ -40,16 +40,24 @@ def create_parser():
 
     common_args: List[ArgType] = [
         ArgType.DATA_UPDATE,
-        ArgType.DATASET,
+        # ArgType.DATASET,
         ArgType.END2END,
         ArgType.MODEL_UPDATE,
     ]
     add_common_arguments(parser, arg_types=common_args)
 
     # Training.
-    # parser.add_argument("--dataset", type=str, default="census", help="Dataset.")
+    parser.add_argument(
+                "--dataset",
+                type=str,
+                choices=["bjaq", "census", "forest", "power", "census_gaussian", "bjaq_gaussian",
+                         "stats","stats_users", "stats_badges","stats_comments","stats_postHistory","postLinks","stats_posts","stats_tags","stats_votes", 
+                        ],
+                required=True,
+                help="choose datasets: bjaq, census, forest, power",
+            )
     parser.add_argument("--num-gpus", type=int, default=0, help="#gpus.")
-    parser.add_argument("--bs", type=int, default=1024, help="Batch size.")
+    parser.add_argument("--bs", type=int, default=512, help="Batch size.")
     parser.add_argument(
         "--warmups",
         type=int,
@@ -332,23 +340,6 @@ def RunUpdateEpoch(
         nsamples = len(model.orderings)
 
     for step, (trb, xb) in enumerate(zip(cycle(trloader), loader)):
-        """
-        if split == 'train':
-            base_lr = 8e-4
-            for param_group in opt.param_groups:
-                if args.constant_lr:
-                    lr = args.constant_lr
-                elif args.warmups:
-                    t = args.warmups
-                    d_model = model.embed_size
-                    global_steps = len(loader) * epoch_num + step + 1
-                    lr = (d_model**-0.5) * min(
-                        (global_steps**-.5), global_steps * (t**-1.5))
-                else:
-                    lr = 1e-2
-
-                param_group['lr'] = lr
-        """
         if upto and step >= upto:
             break
 
@@ -686,22 +677,36 @@ def InitWeight(m):
         nn.init.normal_(m.weight, std=0.02)
 
 
+def GetDatasetPath(end2end: bool = False):
+    if not end2end:
+        table, split_indices = dataset_util.DatasetLoader.load_permuted_dataset(
+            dataset=args.dataset, permute=False
+        )
+    else:
+        dataset_name = args.dataset.split("_")[0]
+        if dataset_name in ["stats"]:
+            abs_dataset_dir = communicator.DatasetPathCommunicator().get()
+            table_name = args.dataset.split("_")[1]
+            dataset_filename = f"{table_name}.npy"
+            abs_dataset_path = os.path.join(abs_dataset_dir, dataset_filename)
+        else:
+            abs_dataset_path = communicator.DatasetPathCommunicator().get()
+        
+        table = dataset_util.NpyDatasetLoader.load_npy_dataset_from_path(
+            path=abs_dataset_path
+        )
+        split_indices = communicator.SplitIndicesCommunicator().get()
+
+    return table, split_indices
+
+
 def AdaptTask(
     pre_model, new_model_path=None, seed=0, end2end: bool = False, freeze=False
 ):
     torch.manual_seed(0)
     np.random.seed(0)
 
-    if not end2end:
-        table, split_indices = dataset_util.DatasetLoader.load_permuted_dataset(
-            dataset=args.dataset, permute=False
-        )
-    else:
-        abs_dataset_path = communicator.DatasetPathCommunicator().get()
-        table = dataset_util.NpyDatasetLoader.load_npy_dataset_from_path(
-            path=abs_dataset_path
-        )
-        split_indices = communicator.SplitIndicesCommunicator().get()
+    table, split_indices = GetDatasetPath(end2end)
 
     table_bits = Entropy(
         table,
@@ -934,16 +939,7 @@ def UpdateTask(
     torch.manual_seed(0)
     np.random.seed(0)
 
-    if not end2end:
-        table, split_indices = dataset_util.DatasetLoader.load_permuted_dataset(
-            dataset=args.dataset, permute=False
-        )
-    else:
-        abs_dataset_path = communicator.DatasetPathCommunicator().get()
-        table = dataset_util.NpyDatasetLoader.load_npy_dataset_from_path(
-            path=abs_dataset_path
-        )
-        split_indices = communicator.SplitIndicesCommunicator().get()
+    table, split_indices = GetDatasetPath(end2end)
 
     table_bits = Entropy(
         table,
@@ -1143,16 +1139,7 @@ def FineTuneTask(pre_model, new_model_path=None, seed=0, end2end: bool = False):
     torch.manual_seed(0)
     np.random.seed(0)
 
-    if not end2end:
-        table, split_indices = dataset_util.DatasetLoader.load_permuted_dataset(
-            dataset=args.dataset, permute=False
-        )
-    else:
-        abs_dataset_path = communicator.DatasetPathCommunicator().get()
-        table = dataset_util.NpyDatasetLoader.load_npy_dataset_from_path(
-            path=abs_dataset_path
-        )
-        split_indices = communicator.SplitIndicesCommunicator().get()
+    table, split_indices = GetDatasetPath(end2end)
 
     table_bits = Entropy(
         table,
@@ -1611,15 +1598,31 @@ def main():
             # UpdateTask(pre_model=model_path, freeze=True)
             FineTuneTask(pre_model=model_path)
     else:
-        model_path = communicator.ModelPathCommunicator().get()
-        new_model_path = model_path  
+        if "_" in args.dataset:
+            dataset_name, extend = args.dataset.split("_")
+        else:
+            dataset_name = args.dataset
 
-        pool_path=f"./data/{args.dataset}/end2end/{args.dataset}_pool.npy"
+        if dataset_name in ["stats"]:
+            model_dir = communicator.ModelPathCommunicator().get()
+            reg_pattren = f"*{args.dataset}*.pt"
+            abs_model_pattern = os.path.join(model_dir, reg_pattren)
+            model_paths = glob.glob(str(abs_model_pattern))
+            assert len(model_paths)==1, "More than 1 model!"
+            model_path = model_paths[0]
+            new_model_path = model_path
+            
+            pool_path=f"./data/{dataset_name}/end2end/{extend}/{extend}_pool.npy"
+        else:
+            model_path = communicator.ModelPathCommunicator().get()
+            new_model_path = model_path
+
+            pool_path=f"./data/{dataset_name}/end2end/{args.dataset}_pool.npy"
+        
         unlearned_data=np.load(pool_path)
         update_size=unlearned_data.shape[0]
         args.update_size=update_size
         print(f"update_size: {update_size}")
-
         # clear pool after model update
         os.remove(pool_path)
 

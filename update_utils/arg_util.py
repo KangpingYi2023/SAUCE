@@ -14,7 +14,7 @@ class ArgType(Enum):
 
 
 DICT_FROM_ARG_TO_ALLOWED_ARG_VALS = {
-    ArgType.DATASET: ["census", "forest", "bjaq", "power", "stats"],
+    ArgType.DATASET: ["census", "forest", "bjaq", "power", "stats", "census_gaussian", "bjaq_gaussian", "forest_gaussian"],
     ArgType.EVALUATION_TYPE: ["estimate", "drift"],
 }
 
@@ -36,7 +36,7 @@ def add_common_arguments(parser: argparse.ArgumentParser, arg_types: List[ArgTyp
             parser.add_argument(
                 "--dataset",
                 type=str,
-                choices=["bjaq", "census", "forest", "power", "stats"],
+                choices=["bjaq", "census", "forest", "power", "stats", "census_gaussian", "bjaq_gaussian"],
                 required=True,
                 help="choose datasets: bjaq, census, forest, power",
             )

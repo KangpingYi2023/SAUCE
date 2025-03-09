@@ -1,3 +1,5 @@
+import json
+import pickle
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List
@@ -59,7 +61,7 @@ class PathCommunicator(FileCommunicator):
         return abs_path
 
     def set(self, new_path: str):
-
+        
         with open(self.abs_file_path, 'w') as file:
             file.write(new_path)
         print(f"SET-{self.prompt}-PATH={new_path}")
@@ -83,12 +85,22 @@ class DriftCommunicator(FileCommunicator):
         with open(self.abs_file_path, 'r') as file:
             content = file.read()
         return content == 'true'
+    
 
-    def set(self, is_drift: bool):
-        with open(self.abs_file_path, 'w') as file:
-            content = 'true' if is_drift else 'false'
-            file.write(content)
+    def get_dict(self):
+        with open(self.abs_file_path, 'rb') as file:
+            content = pickle.load(file)
+        return content
 
+
+    def set(self, is_drift):
+        if isinstance(is_drift, bool):
+            with open(self.abs_file_path, 'w') as file:
+                content = 'true' if is_drift else 'false'
+                file.write(content)
+        elif isinstance(is_drift, dict):
+            with open(self.abs_file_path, 'wb') as file:
+                pickle.dump(is_drift, file)
 
 class CommaSplitArrayCommunicator(FileCommunicator):
     def __init__(self, file_path: str):

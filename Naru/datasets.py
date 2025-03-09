@@ -240,7 +240,7 @@ class JoinOrderBenchmark(object):
 
 
 def LoadImdb(table=None,
-             data_dir='/home/kangping/code/NeuroCard/neurocard/neurocard/datasets/imdb/',
+             data_dir='/workspace/kangping/code/NeuroCard/neurocard/neurocard/datasets/imdb/',
              try_load_parsed=True,
              use_cols='simple'):
     """Loads IMDB tables with a specified set of columns.

@@ -4,6 +4,7 @@ import collections
 import glob
 import os
 import pickle
+import shutil
 import re
 import copy
 import time
@@ -25,6 +26,8 @@ import made
 import transformer
 from FACE.data import table_sample
 from FACE.data.table_sample import MyFlowModel
+from FactorJoin.send_query import send_query
+from workloads.parse_query import parse_query
 from end2end import data_updater
 from sqlParser import Parser
 from update_utils import dataset_util, log_util
@@ -33,6 +36,8 @@ from update_utils.end2end_utils import communicator
 from update_utils.end2end_utils.json_communicator import JsonCommunicator
 from update_utils.path_util import get_absolute_path, convert_path_to_linux_style
 from update_utils.torch_util import get_torch_device
+from update_utils.dataset_util import CsvDatasetLoader
+from update_utils.db_utils import update_pg
 
 
 # For inference speed.
@@ -57,7 +62,7 @@ def create_parser():
 
     # parser.add_argument("--dataset", type=str, default="census", help="Dataset.")
 
-    parser.add_argument("--random_seed", type=int, default=42, help="Random seed")
+    parser.add_argument("--random_seed", type=int, default=1234, help="Random seed")
     
     parser.add_argument("--num_workload", type=int, default=5, help="number of workloads")
 
@@ -371,13 +376,13 @@ def GenerateQuery(
 ):
     """Generate a random query."""
     if not previous_queries:
-        if args.dataset == "census":
+        if "census" in args.dataset:
             num_filters = rng.randint(5, 12)
-        elif args.dataset == "forest":
+        elif "forest" in args.dataset:
             num_filters = rng.randint(3, 9)
-        elif args.dataset == "bjaq":
+        elif "bjaq" in args.dataset:
             num_filters = rng.randint(2, 4)  
-        elif args.dataset == "power":
+        elif "power" in args.dataset:
             num_filters = rng.randint(3, 6)  
         else:
             return
@@ -891,6 +896,36 @@ def LoadOracleCardinalities():
     return None
 
 
+def LoadModelByName(dataset, table, model_dir, columns):
+    model_pattern = os.path.join(model_dir, "*{}_{}*MB-model*-data*-*epochs-seed*.pt".format(dataset, table))
+    model_path = glob.glob(str(model_pattern))[0]
+
+    reg_pattern = ".*/([\D]+)-.+model([\d\.]+)-data([\d\.]+).+seed([\d\.]+).*.pt"
+    z = re.match(reg_pattern, convert_path_to_linux_style(model_path))
+    assert z
+    model_name = z.group(1)
+    model_bits = float(z.group(2))
+    data_bits = float(z.group(3))
+    seed = int(z.group(4))
+    bits_gap = model_bits - data_bits
+    # table_cols = CsvDatasetLoader.DICT_FROM_DATASET_TO_COLS[f"{dataset}_{table}"]
+    
+    print(f"Loading model for {dataset}_{table}!")
+    start_time=time.time()
+    model = MakeMade(
+        scale=256,
+        cols_to_train=columns,
+        seed = seed,
+        fixed_ordering=None,
+    )
+    model.load_state_dict(torch.load(model_path))
+    model.eval()
+    load_latency=time.time()-start_time
+    print("Done, took {:.2f}s".format(load_latency))
+
+    return model
+
+
 def Model_Eval(args, end2end: bool = False):
     if not end2end:
         relative_model_paths = "./models/*{}*MB-model*-data*-*epochs-seed*.pt".format(
@@ -902,150 +937,219 @@ def Model_Eval(args, end2end: bool = False):
             all_ckpts = [ckpt for ckpt in all_ckpts if args.blacklist not in ckpt]
     else:
         # end2end mode
-        all_ckpts = [communicator.ModelPathCommunicator().get()]
+        if args.dataset in ["stats"]:
+            abs_model_dir = communicator.ModelPathCommunicator().get()
+            # all_ckpts = [os.path.join(abs_model_dir, model_filename) for model_filename in os.listdir(abs_model_dir)]
 
-    selected_ckpts = all_ckpts
-    oracle_cards = None  # LoadOracleCardinalities()
-    print("ckpts", selected_ckpts)
-
-    if not args.run_bn:
-        # OK to load tables now
-        table, train_data, oracle_est = MakeTable()
-        cols_to_train = table.columns
-
-    Ckpt = collections.namedtuple(
-        "Ckpt", "epoch model_bits bits_gap path loaded_model seed model_name"
-    )
-    parsed_ckpts = []
-
-    for s in selected_ckpts:
-        if args.order is None:
-            reg_pattern = (
-                ".*/([\D]+)-.+model([\d\.]+)-data([\d\.]+).+seed([\d\.]+).*.pt"
-            )
         else:
-            reg_pattern = ".+model([\d\.]+)-data([\d\.]+).+seed([\d\.]+)-order.*.pt"
-        z = re.match(reg_pattern, convert_path_to_linux_style(s))
-        assert z
-        model_name = z.group(1)
-        model_bits = float(z.group(2))
-        data_bits = float(z.group(3))
-        seed = int(z.group(4))
-        bits_gap = model_bits - data_bits
+            all_ckpts = [communicator.ModelPathCommunicator().get()]
 
-        order = None
-        if args.order is not None:
-            order = list(args.order)
+    if args.dataset in ["stats"]:
+        table_dict=dict()
+        model_dict=dict()
+        abs_dataset_dir = communicator.DatasetPathCommunicator().get()
+        dataset_tables = [dataset for dataset in CsvDatasetLoader.DICT_FROM_DATASET_TO_COLS.keys() if args.dataset in dataset]
 
-        assert args.model in ["transformer", "naru"], "Wrong Model!"
-        if args.model == "transformer":
-            model = MakeTransformer(
-                cols_to_train=table.columns, fixed_ordering=order, seed=seed
-            )
-        elif args.model == "naru":
-            model = MakeMade(
-                scale=args.fc_hiddens,
-                cols_to_train=table.columns,
-                seed=seed,
-                fixed_ordering=order,
-            )
-            
+        for dataset_table in dataset_tables:
+            dataset, table_name = dataset_table.split("_")
+            table = dataset_util.DatasetLoader.load_dataset(dataset=dataset_table)
+            table_dict[table_name] = table
 
-        assert order is None or len(order) == model.nin, order
-        # ReportModel(model)
-        print("Loading ckpt:", s)
-        model.load_state_dict(torch.load(s))
-        model.eval()
+            model_dict[table_name]=LoadModelByName(dataset, table_name, abs_model_dir, table.columns)
 
-        # print(s, bits_gap, seed)
-
-        parsed_ckpts.append(
-            Ckpt(
-                path=s,
-                epoch=None,
-                model_bits=model_bits,
-                bits_gap=bits_gap,
-                model_name=model_name,
-                loaded_model=model,
-                seed=seed,
-            )
+        psample=2048
+        join_estimator=estimators_lib.JoinSampling(
+            table_dict=table_dict,
+            model_dict=model_dict,
+            r=psample,
+            device=DEVICE,
+            estimate_type="progressive_sampling"
         )
 
-    # Estimators to run.
-    if args.run_bn:
-        estimators = RunNParallel(
-            estimator_factory=MakeBnEstimators,
-            parallelism=50,
-            rng=np.random.RandomState(1234),
-            num=args.num_queries,
-            num_filters=None,
-            oracle_cards=oracle_cards,
-        )
+        # query_path="./workloads/stats_CEB/stats_small.sql"
+        # sub_query_path="./workloads/stats_CEB/sub_plan_queries/stats_CEB_sub_queries_small.sql"
+        query_path="./workloads/stats_CEB/stats_light2.sql"
+        sub_query_path="./workloads/stats_CEB/sub_plan_queries/stats_CEB_sub_queries_light2.sql"
+
+        result_path="./end2end/pg/results/stats_sub_queries.txt"
+        log_path = "./end2end/checkpoints/log.txt"
+        latency_path="./end2end/pg/latency"
+        with open(sub_query_path, "r") as f:
+            queries = f.readlines()
+
+        cards = []
+        with open(log_path, "w") as log_file:
+            for i, query_str in enumerate(queries):
+                tables_all, table_predicates, equivalent_sets, true_card = parse_query(query_str)
+                log_file.write(f"Query {i+1}:\n")
+                for key in equivalent_sets:
+                    log_file.write(f"{equivalent_sets[key]}\n")
+
+                cardinality=join_estimator.JoinQuery(tables_all, table_predicates, equivalent_sets, log_file)
+                cards.append(cardinality)
+                # print(f"pred card: {cardinality}, true card: {true_card}. Q-error for query {i+1}: {qerror}")
+                log_file.write(f"pred card for query {i+1}: {cardinality}.\n")
+            # log_file.write(qerror_message)
+
+        with open(result_path, "w") as result_file:
+            for card in cards:
+                result_file.write(f"{card}\n")
+
+        postgre_workdir = "/workspace/kangping/code/SAUCE/FactorJoin/Postgres/data"
+        related_result_path = os.path.relpath(result_path, postgre_workdir)
+        current_datetime = datetime.now(pytz.timezone("Asia/Shanghai"))
+        formatted_datetime = current_datetime.strftime(
+            "%y%m%d-%H%M%S"
+        )  # Format date and time as 'yyMMdd-HHMMSS'
+        if args.model_update == "none":
+            test_type = "naive"
+        else:
+            test_type = "asm"
+        send_query(dataset=dataset, method_name=related_result_path, query_file=query_path, save_folder=latency_path, test_type=test_type, update_type=args.model_update, iteration=formatted_datetime)
+        
     else:
-        estimators = [
-            estimators_lib.ProgressiveSampling(
-                c.loaded_model,
-                table,
-                args.psample,
-                device=DEVICE,
-                shortcircuit=args.column_masking,
-            )
-            for c in parsed_ckpts
-        ]
-        for est, ckpt in zip(estimators, parsed_ckpts):
-            est.name = "{}_{:.2f}".format(ckpt.model_name, ckpt.bits_gap)
+        selected_ckpts = all_ckpts
+        oracle_cards = None  # LoadOracleCardinalities()
+        print("ckpts", selected_ckpts)
 
-        if args.inference_opts:
-            print("Tracing forward_with_encoded_input()...")
-            for est in estimators:
-                encoded_input = est.model.EncodeInput(
-                    torch.zeros(args.psample, est.model.nin, device=DEVICE)
+        if not args.run_bn:
+            # OK to load tables now
+            table, train_data, oracle_est = MakeTable()
+            cols_to_train = table.columns
+
+        Ckpt = collections.namedtuple(
+            "Ckpt", "epoch model_bits bits_gap path loaded_model seed model_name"
+        )
+        parsed_ckpts = []
+
+        for s in selected_ckpts:
+            if args.order is None:
+                reg_pattern = (
+                    ".*/([\D]+)-.+model([\d\.]+)-data([\d\.]+).+seed([\d\.]+).*.pt"
                 )
+            else:
+                reg_pattern = ".+model([\d\.]+)-data([\d\.]+).+seed([\d\.]+)-order.*.pt"
+            z = re.match(reg_pattern, convert_path_to_linux_style(s))
+            assert z
+            model_name = z.group(1)
+            model_bits = float(z.group(2))
+            data_bits = float(z.group(3))
+            seed = int(z.group(4))
+            bits_gap = model_bits - data_bits
 
-                # NOTE: this line works with torch 1.0.1.post2 (but not 1.2).
-                # The 1.2 version changes the API to
-                # torch.jit.script(est.model) and requires an annotation --
-                # which was found to be slower.
-                est.traced_fwd = torch.jit.trace(
-                    est.model.forward_with_encoded_input, encoded_input
+            order = None
+            if args.order is not None:
+                order = list(args.order)
+
+            assert args.model in ["transformer", "naru"], "Wrong Model!"
+            if args.model == "transformer":
+                model = MakeTransformer(
+                    cols_to_train=table.columns, fixed_ordering=order, seed=seed
                 )
+            elif args.model == "naru":
+                model = MakeMade(
+                    scale=args.fc_hiddens,
+                    cols_to_train=table.columns,
+                    seed=seed,
+                    fixed_ordering=order,
+                )
+                
 
-        if args.run_sampling:
-            SAMPLE_RATIO = {"dmv": [0.0013]}  # ~1.3MB.
-            for p in SAMPLE_RATIO.get(args.dataset, [0.01]):
-                estimators.append(estimators_lib.Sampling(table, p=p))
+            assert order is None or len(order) == model.nin, order
+            # ReportModel(model)
+            print("Loading ckpt:", s)
+            model.load_state_dict(torch.load(s))
+            model.eval()
 
-        if args.run_maxdiff:
-            estimators.append(
-                estimators_lib.MaxDiffHistogram(table, args.maxdiff_limit)
+            # print(s, bits_gap, seed)
+
+            parsed_ckpts.append(
+                Ckpt(
+                    path=s,
+                    epoch=None,
+                    model_bits=model_bits,
+                    bits_gap=bits_gap,
+                    model_name=model_name,
+                    loaded_model=model,
+                    seed=seed,
+                )
             )
 
-        # Other estimators can be appended as well.
-
-        random_seed = args.query_seed
-        print(f"query_seed:{random_seed}")
-        """
-        if end2end:
-            random_seed = (
-                communicator.RandomSeedCommunicator().get()
-            )  
-            communicator.RandomSeedCommunicator().update()  
-        """
-        if len(estimators):
-            RunN(
-                table,
-                cols_to_train,
-                estimators,
-                rng=np.random.RandomState(random_seed),
+        # Estimators to run.
+        if args.run_bn:
+            estimators = RunNParallel(
+                estimator_factory=MakeBnEstimators,
+                parallelism=50,
+                rng=np.random.RandomState(1234),
                 num=args.num_queries,
-                log_every=1,
                 num_filters=None,
                 oracle_cards=oracle_cards,
-                oracle_est=oracle_est,
             )
+        else:
+            estimators = [
+                estimators_lib.ProgressiveSampling(
+                    c.loaded_model,
+                    table,
+                    args.psample,
+                    device=DEVICE,
+                    shortcircuit=args.column_masking,
+                )
+                for c in parsed_ckpts
+            ]
+            for est, ckpt in zip(estimators, parsed_ckpts):
+                est.name = "{}_{:.2f}".format(ckpt.model_name, ckpt.bits_gap)
 
-    SaveEstimators(args.err_csv, estimators)
-    print("...Done, result:", args.err_csv)
+            if args.inference_opts:
+                print("Tracing forward_with_encoded_input()...")
+                for est in estimators:
+                    encoded_input = est.model.EncodeInput(
+                        torch.zeros(args.psample, est.model.nin, device=DEVICE)
+                    )
+
+                    # NOTE: this line works with torch 1.0.1.post2 (but not 1.2).
+                    # The 1.2 version changes the API to
+                    # torch.jit.script(est.model) and requires an annotation --
+                    # which was found to be slower.
+                    est.traced_fwd = torch.jit.trace(
+                        est.model.forward_with_encoded_input, encoded_input
+                    )
+
+            if args.run_sampling:
+                SAMPLE_RATIO = {"dmv": [0.0013]}  # ~1.3MB.
+                for p in SAMPLE_RATIO.get(args.dataset, [0.01]):
+                    estimators.append(estimators_lib.Sampling(table, p=p))
+
+            if args.run_maxdiff:
+                estimators.append(
+                    estimators_lib.MaxDiffHistogram(table, args.maxdiff_limit)
+                )
+
+            # Other estimators can be appended as well.
+
+            random_seed = args.query_seed
+            print(f"query_seed:{random_seed}")
+            """
+            if end2end:
+                random_seed = (
+                    communicator.RandomSeedCommunicator().get()
+                )  
+                communicator.RandomSeedCommunicator().update()  
+            """
+            if len(estimators):
+                RunN(
+                    table,
+                    cols_to_train,
+                    estimators,
+                    rng=np.random.RandomState(random_seed),
+                    num=args.num_queries,
+                    log_every=1,
+                    num_filters=None,
+                    oracle_cards=oracle_cards,
+                    oracle_est=oracle_est,
+                )
+
+        SaveEstimators(args.err_csv, estimators)
+        print("...Done, result:", args.err_csv)
 
 
 def MainAll(modelspath):
@@ -1371,11 +1475,33 @@ def test_for_drift(
 ):
     torch.manual_seed(0)
     np.random.seed(0)
+    
+    def dataset_init(dataset):
+        if "census" in dataset:
+            npy_tail="_int.npy"
+        else:
+            npy_tail=".npy"
 
-    def offline_phase(table, model, table_bits, simulations, sample_size):
+        # Get the dataset path
+        if "_" in dataset:
+            dataset_name=dataset.split("_")[0]
+            src_dataset_path = f"./data/{dataset_name}/{dataset}{npy_tail}"  # Original dataset path
+            end2end_dataset_path = f"./data/{dataset_name}/end2end/{dataset}{npy_tail}"  # End2end dataset path
+        else:
+            src_dataset_path = f"./data/{dataset}/{dataset}{npy_tail}"  # Original dataset path
+            end2end_dataset_path = f"./data/{dataset}/end2end/{dataset}{npy_tail}"  # End2end dataset path
+        abs_src_dataset_path = get_absolute_path(src_dataset_path)
+        abs_end2end_dataset_path = get_absolute_path(end2end_dataset_path)
+
+        # Copy the original dataset to the end2end folder, overwrite if it exists
+        shutil.copy2(src=abs_src_dataset_path, dst=abs_end2end_dataset_path)
+
+        return abs_end2end_dataset_path
+
+    def offline_phase(table, model, table_bits, simulations, sample_size, update_size):
         t1 = time.time()
         train_data = common.TableDataset(table)
-        train_data.tuples = train_data.tuples[: -args.update_size]  
+        train_data.tuples = train_data.tuples[: -update_size]  
 
         avg_ll = []
         std_ll=[]
@@ -1415,11 +1541,11 @@ def test_for_drift(
 
         return np.mean(avg_ll), 2 * np.std(avg_ll), t2 - t1
 
-    def online_phase(table, model, table_bits, mean, threshold, sample_size):
+    def online_phase(table, model, table_bits, mean, threshold, sample_size, update_size):
         t1 = time.time()
         train_data = common.TableDataset(table)
 
-        train_data.tuples = train_data.tuples[ -args.update_size : ]  
+        train_data.tuples = train_data.tuples[ -update_size : ]  
         # idx = rndindices = torch.randperm(len(train_data.tuples))[:5000]
         idx = rndindices = torch.randperm(len(train_data.tuples))[:sample_size]
 
@@ -1475,33 +1601,100 @@ def test_for_drift(
     def data_update():
         raw_data, sampled_data = None, None
         if not end2end:
-            is_raw: bool = data_type == "raw"
-            table, _ = dataset_util.DatasetLoader.load_permuted_dataset(
-                dataset=args.dataset, permute=is_raw
-            )
-            data_path=""
+            abs_dataset_path = dataset_init(args.dataset)
+            random_seed=args.random_seed
 
-        else:
-            abs_dataset_path = communicator.DatasetPathCommunicator().get()
-
-            random_seed=JsonCommunicator().get(f"random_seed")
             (
                 raw_data,
                 sampled_data,
             ) = data_updater.DataUpdater.update_dataset_from_file_to_file(
                 data_update_method=args.data_update,
                 update_fraction=0.2,  
-                update_size=args.update_size,  
+                # update_size=args.update_size,  
                 raw_dataset_path=abs_dataset_path,
                 updated_dataset_path=abs_dataset_path,
                 random_seed=random_seed,
             )
-
-            table = dataset_util.NpyDatasetLoader.load_npy_dataset_from_path(
-                path=abs_dataset_path
+            
+            table, _ = dataset_util.DatasetLoader.load_permuted_dataset(
+                dataset=args.dataset, permute=False
             )
-            # save_path=f"./data/{args.dataset}/permuted_dataset.csv"
-            # table.data.to_csv(save_path, index=False)
+
+        else:
+            abs_dataset_path = communicator.DatasetPathCommunicator().get()
+
+            if os.path.isdir(abs_dataset_path):
+                table_dirs = os.listdir(abs_dataset_path)
+                white_list =[]
+                if args.dataset == "stats":
+                    white_list = ["badges", "comments", "postHistory", "posts", "tags", "users", "votes"]
+
+                tables=dict()
+                raw_datas=dict()
+                sampled_datas=dict()
+                for table_name in table_dirs:
+                    abs_table_path = os.path.join(abs_dataset_path, table_name)
+
+                    if table_name in white_list:
+                        random_seed=JsonCommunicator().get(f"random_seed")
+                        (
+                            raw_data,
+                            sampled_data,
+                            delta_data_to_db,
+                        ) = data_updater.DataUpdater.update_dataset_from_dir_to_dir(
+                            table_name=table_name,
+                            data_update_method=args.data_update,
+                            update_fraction=0.04,  
+                            # update_size=args.update_size,  
+                            raw_dataset_dir=abs_table_path,
+                            random_seed=random_seed,
+                        )
+
+                        table = dataset_util.NpyDatasetLoader.load_npy_dataset_from_path(
+                            path=os.path.join(abs_table_path, f"{table_name}.npy"), name=table_name
+                        )
+
+                        # table = dataset_util.NpyDatasetLoader.load_npy_dataset_from_path(
+                        #     path=f"./data/stats/numpy/{table_name}.npy", name=table_name
+                        # )
+
+                        # table = dataset_util.CsvDatasetLoader.load_csv_dataset(dataset_name=f"{args.dataset}_{table_name}")
+
+                        tables[table_name]=table
+                        raw_datas[table_name]=raw_data.astype(np.float32)
+                        sampled_datas[table_name]=sampled_data.astype(np.float32)
+
+                        # Save to delta file and insert in postgres
+                        # delta_dataname = f"{args.dataset}_{table_name}"
+                        # delta_cols = CsvDatasetLoader.DICT_FROM_DATASET_TO_COLS.get(delta_dataname, [])
+                        # delta_data_to_db = pd.DataFrame(sampled_data, columns=delta_cols)
+
+                        delta_filename = f"{table_name}_delta.csv"
+                        delta_path = os.path.join(abs_dataset_path, "delta", delta_filename)
+                        delta_data_to_db.to_csv(delta_path, index=False)
+                        update_pg(args.dataset, table_name, delta_path)
+                    
+                return tables, raw_datas, sampled_datas
+            else:
+                random_seed=JsonCommunicator().get(f"random_seed")
+                (
+                    raw_data,
+                    sampled_data,
+                ) = data_updater.DataUpdater.update_dataset_from_file_to_file(
+                    data_update_method=args.data_update,
+                    update_fraction=0.2,  
+                    update_size=args.update_size,  
+                    raw_dataset_path=abs_dataset_path,
+                    updated_dataset_path=abs_dataset_path,
+                    random_seed=random_seed,
+                )
+
+                table = dataset_util.NpyDatasetLoader.load_npy_dataset_from_path(
+                    path=abs_dataset_path
+                )
+                # save_path=f"./data/{args.dataset}/permuted_dataset.csv"
+                # table.data.to_csv(save_path, index=False)
+                
         return table, raw_data.astype(np.float32), sampled_data.astype(np.float32)
 
     def kl_divergence(mu1, sigma1, mu2, sigma2):
@@ -1514,10 +1707,10 @@ def test_for_drift(
         # new_sample = table_sample.sampling(sampled_data, sample_size, replace=True)
         full_data=np.vstack((raw_data, sampled_data))
 
-        old_mean = np.mean(raw_data, axis=0)
-        new_mean = np.mean(full_data, axis=0)
-        old_std = np.std(raw_data, axis=0)
-        new_std = np.std(full_data,axis=0)
+        old_mean = np.nanmean(raw_data, axis=0)
+        new_mean = np.nanmean(full_data, axis=0)
+        old_std = np.nanstd(raw_data, axis=0)
+        new_std = np.nanstd(full_data,axis=0)
         kl_score=kl_divergence(old_mean, old_std, new_mean, new_std)
         kl_score=np.mean(kl_score)
         print(f"Distance score: {kl_score}")
@@ -1528,8 +1721,8 @@ def test_for_drift(
     table, raw_data, sampled_data = data_update()
     print(f"Data updated!")
 
-    def drift_detect(table, raw_data, sampled_data, sample_size) -> bool:
-        if not end2end or args.drift_test == "ddup":
+    def drift_detect(table, raw_data, sampled_data, sample_size, pre_model, table_name = None) -> bool:
+        if args.drift_test == "ddup":
             table_bits = Entropy(
                 table,
                 table.data.fillna(value=0)
@@ -1555,24 +1748,35 @@ def test_for_drift(
                 )
 
                 # model.load_state_dict(torch.load(args.glob))
+                if args.dataset in ["stats"]:
+                    pre_model_dir = Path(pre_model)
+                    matching_files = [file for file in pre_model_dir.rglob("*") if table_name in file.name]
+                    assert len(matching_files)==1, "Too Many Models!"
+                    pre_model = os.path.join(pre_model_dir, matching_files[0])
+
                 model.load_state_dict(torch.load(pre_model))
                 model.eval()
 
                 # mb = ReportModel(model)
 
+                update_size = sampled_data.shape[0]
                 mean, threshold, time_off = offline_phase(
                     table,
                     model,
                     table_bits,
                     simulations=bootstrap,
                     sample_size=sample_size,
+                    update_size=update_size,
                 )
                 drift, time_on = online_phase(
-                    table, model, table_bits, mean, threshold, sample_size=sample_size
+                    table, model, table_bits, mean, threshold, sample_size=sample_size, update_size=update_size,
                 )
                 print("Offline time = {}\nOnline time = {}".format(time_off, time_on))
                 print("Test result: {}".format(drift))
+
             elif args.model == "face":
+                assert args.dataset not in ["stats"], f"dataset {args.dataset} is not supported!" 
+
                 device = torch.device("cpu")
                 model_name = "BJAQ" if args.dataset == "bjaq" else args.dataset
                 
@@ -1590,6 +1794,8 @@ def test_for_drift(
                 drift = mean_reduction > threshold
                 # drift = False
             elif args.model=="transformer":
+                assert args.dataset not in ["stats"], f"dataset {args.dataset} is not supported!" 
+
                 model = MakeTransformer(
                     cols_to_train=table.columns, fixed_ordering=None, seed=seed
                 )
@@ -1626,6 +1832,22 @@ def test_for_drift(
                 thres=1.73e-6
             elif args.dataset == "power":
                 thres=8.03e-6
+            elif args.dataset == "bjaq_gaussian":
+                thres=1.90e-5
+            elif args.dataset == "census_gaussian":
+                thres=7.41e-5
+            elif args.dataset == "stats":
+                thres_dict={
+                    "badges":       3.3667e-4,
+                    "votes":        4.5573e-4,
+                    "postHistory":  4.3794e-4,
+                    "posts":        4.7584e-4,
+                    "users":        0.0011,
+                    "comments":     6.5434e-4,
+                    "postLinks":    5.2538e-4,
+                    "tags":         0.0010,
+                }
+                thres=thres_dict[table_name]
         
 
             return distribution_test(
@@ -1638,33 +1860,85 @@ def test_for_drift(
         if args.drift_test == "none":
             return False
 
-    pool_path=f"./data/{args.dataset}/end2end/{args.dataset}_pool.npy"
-    if os.path.isfile(pool_path):
-        unlearned_data=np.load(pool_path).astype(np.float32)
-        unlearned_size=unlearned_data.shape[0]
-        previous_data=raw_data[:-unlearned_size]
-        new_data=np.vstack((unlearned_data,sampled_data))
+    if end2end:
+        if args.dataset in ["stats"]:
+            dataset_name=args.dataset
+            
+            previous_data = dict()
+            new_data = dict()
+            for table_name in table:
+                pool_path=f"./data/{dataset_name}/end2end/{table_name}/{table_name}_pool.npy"
+                if os.path.isfile(pool_path):
+                    unlearned_data=np.load(pool_path).astype(np.float32)
+                    unlearned_size=unlearned_data.shape[0]
+                    previous_data[table_name]=raw_data[table_name][:-unlearned_size]
+                    new_data[table_name]=np.vstack((unlearned_data,sampled_data))
+                else:
+                    previous_data[table_name]=raw_data[table_name]
+                    new_data[table_name]=sampled_data[table_name]
+                np.save(pool_path, new_data[table_name])
+            
+        else:
+            if "_" in args.dataset:
+                dataset_name=args.dataset.split("_")[0]
+            else:
+                dataset_name=args.dataset
+            pool_path=f"./data/{dataset_name}/end2end/{args.dataset}_pool.npy"
+            if os.path.isfile(pool_path):
+                unlearned_data=np.load(pool_path).astype(np.float32)
+                unlearned_size=unlearned_data.shape[0]
+                previous_data=raw_data[:-unlearned_size]
+                new_data=np.vstack((unlearned_data,sampled_data))
+            else:
+                previous_data=raw_data
+                new_data=sampled_data
+            np.save(pool_path, new_data)
+        
     else:
+        assert args.dataset not in ["stats"], f"dataset {args.dataset} is not supported!" 
         previous_data=raw_data
         new_data=sampled_data
-    np.save(pool_path, new_data)
 
-    detection_start=time.time()
-   
-    print(f"Previous data size: {previous_data.shape}, new data size: {new_data.shape}")
-    is_drift: bool = drift_detect(table, previous_data, new_data, sample_size)
-    detection_finish=time.time()
-    time_overhead=detection_finish-detection_start
-    
-    if args.drift_test=="ddup":
-        detection_type="DDUp"
-    elif args.drift_test=="sauce":
-        detection_type="SAUCE"
+    if args.dataset in ["stats"]:
+        detection_start=time.time()
+        drifts_dict = dict()
+        for table_name in table:
+            table_single = table[table_name]
+            previous_data_single = previous_data[table_name]
+            new_data_single = new_data[table_name]
+
+            print(f"Table {table_name}, previous data size: {previous_data_single.shape}, new data size: {new_data_single.shape}")
+            is_drift: bool = drift_detect(table_single, previous_data_single, new_data_single, sample_size, pre_model, table_name)
+            drifts_dict[table_name] = is_drift
+        detection_finish=time.time()
+        time_overhead=detection_finish-detection_start
+
+        if args.drift_test=="ddup":
+            detection_type="DDUp"
+        elif args.drift_test=="sauce":
+            detection_type="SAUCE"
+        else:
+            detection_type="None"
+        print(f"{detection_type} Drift detection: {is_drift}")
+        print("Detection latency: {:.4f}s".format(time_overhead))
+        communicator.DriftCommunicator().set(is_drift=drifts_dict)
     else:
-        detection_type="None"
-    print(f"{detection_type} Drift detection: {is_drift}")
-    print("Detection latency: {:.4f}s".format(time_overhead))
-    communicator.DriftCommunicator().set(is_drift=is_drift)  
+        detection_start=time.time()
+
+        print(f"Previous data size: {previous_data.shape}, new data size: {new_data.shape}")
+        is_drift: bool = drift_detect(table, previous_data, new_data, sample_size)
+        detection_finish=time.time()
+        time_overhead=detection_finish-detection_start
+        
+        if args.drift_test=="ddup":
+            detection_type="DDUp"
+        elif args.drift_test=="sauce":
+            detection_type="SAUCE"
+        else:
+            detection_type="None"
+        print(f"{detection_type} Drift detection: {is_drift}")
+        print("Detection latency: {:.4f}s".format(time_overhead))
+        communicator.DriftCommunicator().set(is_drift=is_drift)  
   
 
 def main():
@@ -1696,9 +1970,9 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
-    table, train_data, oracle_est = MakeTable()
-    num_samples=1000
-    JS=estimators_lib.JoinSampling(join_iter=train_data, table=table, num_samples=num_samples)
-    print("Success!")
+    main()
+    # table, train_data, oracle_est = MakeTable()
+    # num_samples=1000
+    # JS=estimators_lib.JoinSampling(join_iter=train_data, table=table, num_samples=num_samples)
+    # print("Success!")
 

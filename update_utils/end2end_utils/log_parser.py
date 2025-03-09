@@ -1,6 +1,8 @@
 import ast
 import re
 import sys
+import os
+import pandas as pd
 
 sys.path.append("./")
 from pathlib import Path
@@ -12,7 +14,7 @@ from update_utils import path_util, log_util
 
 MODEL_NAME=['face', 'naru', 'transformer']
 UPDATE_TYPE=['sample', 'permute-opt', 'single', 'value', 'tupleskew', 'valueskew']
-DATASET_NAME=['bjaq', 'census', 'forest', 'power']
+DATASET_NAME=['bjaq', 'census', 'forest', 'power', 'bjaq_gaussian', 'census_gaussian']
 
 def parse_lines_with_keywords(src_path: Path, dst_path: Path, start_words: List[str]):
     with src_path.open("r") as src_file, dst_path.open("w") as dst_file:
@@ -34,14 +36,17 @@ def parse_experiment_records(
             "Input arguments",
             "JSON-passed parameters",
             "Experiment Summary",
-            "Mean JS divergence",
+            "Distance score",
             "WORKLOAD-FINISHED",
             "ReportEsts",
         ]
     if var_names is None:
         var_names = ["Model-update-time"]
     if list_names is None:
-        list_names = ["ReportEsts"]
+        list_names = [
+            # "ReportEsts", 
+            # "Distance score",
+        ]
 
     src_dir_path = path_util.get_absolute_path(src_dir)
     dst_dir_path = path_util.get_absolute_path(dst_dir)
@@ -53,16 +58,14 @@ def parse_experiment_records(
         err_dict={}
         for dataset in DATASET_NAME:
             err_dict[dataset]={}
-            for ut in UPDATE_TYPE:
-                err_dict[dataset][ut]={}
-                for model_name in MODEL_NAME:
-                    err_dict[dataset][ut][model_name]=[]
+            for model_name in MODEL_NAME:
+                err_dict[model_name][dataset]=[]
 
         return err_dict
                 
-    errs=err_dict_init()
-    err_labels=err_dict_init()
-
+    errs={}
+    scores={}
+    
     for src_file_path in src_dir_path.glob("*.txt"):
         dst_file_path = dst_dir_path / src_file_path.name
 
@@ -91,12 +94,16 @@ def parse_experiment_records(
                 dst_file_path, list_name=list_name
             )
 
-            if match_cnt == 0:
-                log_util.append_to_file(dst_file_path, f"Keyword {list_name} NOT found")
-                continue
-
             # log_util.append_to_file(dst_file_path, f"Concatenated {list_name} = {concat_list}")
             if list_name == "ReportEsts":
+                if match_cnt == 0:
+                    log_util.append_to_file(dst_file_path, f"Keyword {list_name} NOT found")
+                    continue
+                
+                if model not in errs:
+                    errs[model]={}
+                if dataset not in errs[model]:
+                    errs[model][dataset]=[]
 
                 def generate_report_est_str(arr: list) -> str:
                     arr_max = np.max(arr)
@@ -129,7 +136,28 @@ def parse_experiment_records(
                 )
                 log_util.append_to_file(dst_file_path, content=after_query_est_msg)
 
+                """log for bootstrap"""
+                errs[model][dataset].append(np.mean(after_query_errs))
 
+            if list_name == "Distance score":
+                """Only log for bootstrap"""
+                if match_cnt == 0:
+                    print(f"Keyword {list_name} NOT found")
+                    continue
+                if match_cnt > 1:
+                    print(f"Too many {list_name}s!")
+                    continue
+
+                if model not in scores:
+                    scores[model]={}
+                if dataset not in scores[model]:
+                    scores[model][dataset]=[]
+
+                scores[model][dataset].append(concat_list[0])
+
+    # log4bootstrap(errs, scores)
+
+            
 def sum_float_var_in_log(file_path: Path, var_name: str) -> float:
     total_sum = 0.0
     with file_path.open("r") as file:
@@ -149,7 +177,10 @@ def concat_list_var_in_log(file_path: Path, list_name: str):
     concatenated_list = []
 
     # Regular expression to find the desired list name and its contents
-    pattern = rf"{re.escape(list_name)}: \[([^\]]*)\]"
+    if list_name == "ReportEsts":
+        pattern = rf"{re.escape(list_name)}: \[([^\]]*)\]"
+    elif list_name == "Distance score":
+        pattern = rf"{re.escape(list_name)}: ([^\]]*)"
 
     match_cnt = 0
 
@@ -188,6 +219,24 @@ def plot_box(arr: list, plot_labels, file_name: str):
     plt.clf()
     # plt.show()
     
+
+def log4bootstrap(qerrors_all, scores_all):
+    for model in scores_all:
+        for dataset in scores_all[model]:
+            qerrors=qerrors_all[model][dataset]
+            scores=scores_all[model][dataset]
+
+            bootstrap_dir="/workspace/kangping/code/SAUCE/end2end/end2end-bootstrap"
+            bootstrap_file=f"{model}+{dataset}+dis+qerror.csv"
+            bootstrap_path=os.path.join(bootstrap_dir, bootstrap_file)
+
+            bootstrap_data=pd.DataFrame({
+                "distances": scores,
+                "q-errors": qerrors
+            })
+
+            bootstrap_data.to_csv(bootstrap_path, header=True, index=False, mode="w")
+
 
 if __name__ == "__main__":
     src_dir: str = "./end2end/experiment-records"

@@ -10,7 +10,7 @@ from update_utils.path_util import get_absolute_path
 
 class DatasetLoaderUtils:
     @staticmethod
-    def clean_df(df: pd.DataFrame) -> pd.DataFrame:
+    def clean_df(df: pd.DataFrame, drop: bool = False) -> pd.DataFrame:
         df = df.dropna(axis=1, how="all")
 
         df_obj = df.select_dtypes(["object"])
@@ -26,7 +26,10 @@ class DatasetLoaderUtils:
 
         df.replace("", np.nan, inplace=True)
 
-        df.dropna(inplace=True)
+        if drop:
+            df.dropna(inplace=True)
+        else:
+            df.fillna(0, inplace=True)
 
         return df
 
@@ -121,15 +124,22 @@ class CsvDatasetLoader:
     def load_csv_dataset(
             dataset_name: str,
             batch_num=None,
-            finetune=False
+            finetune=False,
+            file_path=None,
     ):
         cols = CsvDatasetLoader.DICT_FROM_DATASET_TO_COLS.get(dataset_name, [])
 
         if dataset_name in ["census", "forest"]:
-            csv_file = f"./data/{dataset_name}/{dataset_name}.csv"
+            if file_path is None:
+                csv_file = f"./data/{dataset_name}/{dataset_name}.csv"
+            else:
+                csv_file = file_path
         elif dataset_name.split("_")[0] in ["stats"]:
-            table_name=dataset_name.split("_")[-1]
-            csv_file = f"./data/stats_simplified/{table_name}.csv"
+            if file_path is None:
+                table_name=dataset_name.split("_")[-1]
+                csv_file = f"./data/stats/convert_data/{table_name}.csv"
+            else:
+                csv_file = file_path
         csv_file = get_absolute_path(csv_file)
         df = pd.read_csv(csv_file, usecols=cols, sep=",")
 
@@ -239,21 +249,31 @@ class NpyDatasetLoader:
         return df, column_names
 
     @staticmethod
-    def load_npy_dataset_from_path(path: Path):
+    def load_npy_dataset_from_path(path: Path, name: str = None, drop: bool = False):
         df, cols = NpyDatasetLoader._load_npy_as_df(path)
 
-        df = DatasetLoaderUtils.clean_df(df)
+        df = DatasetLoaderUtils.clean_df(df, drop=drop)
 
         print("load_npy_dataset_from_path - df.shape =", df.shape)
 
-        return common.CsvTable('default', df, cols)
+        if name is None:
+            name = 'default'
+        return common.CsvTable(name, df, cols)
 
     @staticmethod
     def load_permuted_npy_dataset(dataset_name: str, permute=True):
-        if dataset_name=='census':
-            npy_file_path = f"./data/{dataset_name}/end2end/census_int.npy"
+        if 'census' in dataset_name:
+            npy_file_path = f"./data/census/end2end/{dataset_name}_int.npy"
         else:
-            npy_file_path = f"./data/{dataset_name}/end2end/{dataset_name}.npy"
+            if "_" in dataset_name:
+                dataset_subname, extent=dataset_name.split("_")
+                if dataset_subname in ["stats"]:
+                    npy_file_path = f"./data/{dataset_subname}/end2end/{extent}.npy"
+                else:
+                    npy_file_path = f"./data/{dataset_subname}/end2end/{dataset_name}.npy"
+            else:
+                npy_file_path = f"./data/{dataset_name}/end2end/{dataset_name}.npy"
+            
         permuted_csv_file_path = f"./data/{dataset_name}/permuted_dataset.csv"
         if permute:
             abs_file_path = get_absolute_path(npy_file_path)
@@ -292,6 +312,14 @@ class DatasetLoader:
         elif dataset in ["bjaq", "power"]:
             abs_path = get_absolute_path(f"./data/{dataset}/{dataset}.npy")
             table = NpyDatasetLoader.load_npy_dataset_from_path(path=abs_path)
+        elif dataset in ["bjaq_gaussian", "census_gaussian", "forest_gaussian"]:
+            dataset_name = dataset.split("_")[0]
+            if dataset_name == "census":
+                abs_path = get_absolute_path(f"./data/{dataset_name}/{dataset}_int.npy")
+                table = NpyDatasetLoader.load_npy_dataset_from_path(path=abs_path)
+            else:
+                abs_path = get_absolute_path(f"./data/{dataset_name}/{dataset}.npy")
+                table = NpyDatasetLoader.load_npy_dataset_from_path(path=abs_path)
         elif dataset.split("_")[0] in ["stats"]:
             table = CsvDatasetLoader.load_csv_dataset(dataset_name=dataset)
         else:
@@ -321,6 +349,8 @@ class DatasetLoader:
         '''
         
         if dataset in ["census", "forest", "bjaq", "power"]:
+            table, split_indices = NpyDatasetLoader.load_permuted_npy_dataset(dataset_name=dataset, permute=permute)
+        elif dataset in ["census_gaussian", "bjaq_gaussian", "forest_gaussian"]:
             table, split_indices = NpyDatasetLoader.load_permuted_npy_dataset(dataset_name=dataset, permute=permute)
         else:
             raise ValueError(f"Unknown dataset name \"{dataset}\"")

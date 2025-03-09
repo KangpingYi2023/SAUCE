@@ -16,6 +16,7 @@ def threshold_drive(dataset:str, distances, qerrors, max_qerror=2, FP=0.01):
 
     return threshold
 
+
 def threshold_setting_per_model(dataset_paras):
     models=["naru","transformer","face"]
     # datasets=["bjaq","census","power","forest"]
@@ -84,21 +85,29 @@ def threshold_setting_per_dataset(dataset_para):
 
 if __name__ == '__main__':
     dataset_para={
-        "bjaq": {
-            "max_qerror": 1.3,
-            "FP": 1e-3
-        },
-        "census": {
-            "max_qerror": 1.5,
-            "FP": 2e-2
-        },
-        "forest": {
+        # "bjaq": {
+        #     "max_qerror": 1.3,
+        #     "FP": 1e-3
+        # },
+        # "census": {
+        #     "max_qerror": 1.5,
+        #     "FP": 2e-2
+        # },
+        # "forest": {
+        #     "max_qerror": 2,
+        #     "FP": 1e-2
+        # },
+        # "power": {
+        #     "max_qerror": 1.4,
+        #     "FP": 1e-2
+        # },
+        "bjaq_gaussian":{
             "max_qerror": 2,
             "FP": 1e-2
         },
-        "power": {
-            "max_qerror": 1.4,
+        "census_gaussian": {
+            "max_qerror": 2,
             "FP": 1e-2
-        },
+        }
     }
     threshold_setting_per_dataset(dataset_para)

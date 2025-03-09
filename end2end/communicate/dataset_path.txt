@@ -1,1 +1,1 @@
-./data/census/end2end/census_int.npy
+./data/stats/end2end

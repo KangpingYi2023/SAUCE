@@ -108,7 +108,7 @@ def create_parser():
 
 args = create_parser().parse_args()
 
-if args.training_type == "retrain":
+if args.model == "transformer":
     DEVICE = get_torch_device(extra=True)
 else:
     DEVICE = get_torch_device(extra=False)
@@ -470,11 +470,12 @@ def main():
     # Load dataset
     if args.dataset == "stats":
         table_list=['badges', 'votes', 'postHistory', 'posts', 'users', 'comments', 'postLinks', 'tags']
+        # table_list=['posts', 'users', 'comments', 'postLinks', 'tags']
         for table_name in table_list:
             dataset_name="stats_" + table_name
             table = dataset_util.DatasetLoader.load_dataset(dataset=dataset_name)
             TrainTask(dataset=dataset_name, table=table)
-    elif args.dataset in ["power", "census", "bjaq"]:
+    elif args.dataset in ["power", "census", "bjaq", "census_gaussian", "bjaq_gaussian", "forest_gaussian"]:
         if args.training_type=="train":
             table = dataset_util.DatasetLoader.load_dataset(dataset=args.dataset)
         elif args.training_type=="retrain":

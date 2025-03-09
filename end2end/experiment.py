@@ -22,6 +22,7 @@ from update_utils import path_util, log_util
 from update_utils.arg_util import add_common_arguments, ArgType
 from update_utils.end2end_utils import communicator, log_parser
 from update_utils.end2end_utils.json_communicator import JsonCommunicator
+from update_utils.db_utils import init_pg
 
 
 def parse_args() -> argparse.Namespace:
@@ -52,9 +53,9 @@ def validate_argument(args):
     if args.model_update == "update" and args.drift_test != "ddup":
         sys.exit("Argument error: When model_update is 'update', drift_test must be 'ddup'.")
 
-    # If model_update is 'adapt', drift_test must be 'js'
-    if args.model_update == "adapt" and args.drift_test != "js":
-        sys.exit("Argument error: When model_update is 'adapt', drift_test must be 'js'.")
+    # If model_update is 'adapt', drift_test must be 'sauce'
+    if args.model_update == "adapt" and args.drift_test != "sauce":
+        sys.exit("Argument error: When model_update is 'adapt', drift_test must be 'sauce'.")
 
     # random_seed must be >= 0
     if args.random_seed < 0:
@@ -88,21 +89,43 @@ def prepare_end2end_model(dataset: str, model: str):
     abs_model_reg: Path = path_util.get_absolute_path(reg_model_path)
     model_paths = glob.glob(str(abs_model_reg))  # Pattern match result
     assert model_paths, "No matching model paths found."
-    model_path = model_paths[0]  # Take the first match
-    src_model_filename = os.path.basename(model_path)  # Original model file name
 
-    # Get the path of the original model
-    src_model_path = f"{model_dir}/{src_model_filename}"
-    abs_src_model_path = path_util.get_absolute_path(src_model_path)
+    if dataset in ["stats"]:
+        end2end_model_dir = f"./models/end2end/{model}/{dataset}"
+        if not os.path.exists(end2end_model_dir):
+            os.mkdir(end2end_model_dir)
+        abs_end2end_model_dir = path_util.get_absolute_path(end2end_model_dir)
 
-    print(f"Source Model path: {src_model_path}")
+        for model_path in model_paths:
+            src_model_filename = os.path.basename(model_path)  # Original model file name
+            # Get the path of the original model
+            src_model_path = f"{model_dir}/{src_model_filename}"
+            abs_src_model_path = path_util.get_absolute_path(src_model_path)
 
-    # Copy the original model to the end2end folder, overwrite if it exists
-    end2end_model_path = f"./models/end2end/{model}/{src_model_filename}"  # Path to save the end2end model
-    abs_end2end_model_path = path_util.get_absolute_path(end2end_model_path)
-    shutil.copy2(src=abs_src_model_path, dst=abs_end2end_model_path)
+            print(f"Source Model path: {src_model_path}")
 
-    return end2end_model_path, abs_end2end_model_path
+            # Copy the original model to the end2end folder, overwrite if it exists
+            abs_end2end_model_path = os.path.join(abs_end2end_model_dir, src_model_filename)  # Path to save the end2end model
+            # abs_end2end_model_path = path_util.get_absolute_path(end2end_model_path)
+            shutil.copy2(src=abs_src_model_path, dst=abs_end2end_model_path)
+
+        return end2end_model_dir, abs_end2end_model_dir
+    else:
+        model_path = model_paths[0]  # Take the first match
+        src_model_filename = os.path.basename(model_path)  # Original model file name
+        
+        # Get the path of the original model
+        src_model_path = f"{model_dir}/{src_model_filename}"
+        abs_src_model_path = path_util.get_absolute_path(src_model_path)
+
+        print(f"Source Model path: {src_model_path}")
+
+        # Copy the original model to the end2end folder, overwrite if it exists
+        end2end_model_path = f"./models/end2end/{model}/{src_model_filename}"  # Path to save the end2end model
+        abs_end2end_model_path = path_util.get_absolute_path(end2end_model_path)
+        shutil.copy2(src=abs_src_model_path, dst=abs_end2end_model_path)
+
+        return end2end_model_path, abs_end2end_model_path
 
 
 def prepare_end2end_dataset(dataset: str, model: str):
@@ -111,25 +134,66 @@ def prepare_end2end_dataset(dataset: str, model: str):
     """
 
     npy_tail = ".npy"
-    if dataset == "census" and model in ["naru", "transformer"]:
-        # For the census dataset and naru model, use census_int.npy
-        npy_tail = "_int.npy"
 
-    # Get the dataset path
-    src_dataset_path = f"./data/{dataset}/{dataset}{npy_tail}"  # Original dataset path
-    end2end_dataset_path = f"./data/{dataset}/end2end/{dataset}{npy_tail}"  # End2end dataset path
-    abs_src_dataset_path = path_util.get_absolute_path(src_dataset_path)
-    abs_end2end_dataset_path = path_util.get_absolute_path(end2end_dataset_path)
+    if dataset in ["stats"]:
+        dataset_name=dataset
+        csv_dataset_dir=f"./data/{dataset_name}"
+        npy_dataset_dir=f"./data/{dataset_name}/numpy"
+        end2end_dataset_dir=f"./data/{dataset_name}/end2end"
+        abs_csv_dataset_dir = path_util.get_absolute_path(csv_dataset_dir)
+        abs_npy_dataset_dir = path_util.get_absolute_path(npy_dataset_dir)
+        abs_end2end_dataset_dir = path_util.get_absolute_path(end2end_dataset_dir)
+        
+        table_list = []
+        for table_path in os.listdir(abs_npy_dataset_dir):
+            npy_table_filename = os.path.basename(table_path)
+            table_name = os.path.splitext(npy_table_filename)[0]
+            abs_csv_dataset_path = os.path.join(abs_csv_dataset_dir, f"{table_name}.csv")
+            abs_npy_dataset_path = os.path.join(abs_npy_dataset_dir, npy_table_filename)
 
-    # Copy the original dataset to the end2end folder, overwrite if it exists
-    shutil.copy2(src=abs_src_dataset_path, dst=abs_end2end_dataset_path)
+            abs_end2end_table_dir = os.path.join(abs_end2end_dataset_dir, table_name)
+            if not os.path.exists(abs_end2end_table_dir):
+                os.mkdir(abs_end2end_table_dir)
 
-    # Clear the buffer pool
-    pool_path = f"./data/{dataset}/end2end/{dataset}_pool.npy"
-    if os.path.isfile(pool_path):
-        os.remove(pool_path)
+            # Copy the original dataset to the end2end folder, overwrite if it exists
+            abs_end2end_npy_dataset_path = os.path.join(abs_end2end_table_dir, npy_table_filename)
+            abs_end2end_csv_dataset_path = os.path.join(abs_end2end_table_dir, f"{table_name}.csv")
+            shutil.copy2(src=abs_npy_dataset_path, dst=abs_end2end_npy_dataset_path)
+            shutil.copy2(src=abs_csv_dataset_path, dst=abs_end2end_csv_dataset_path)
 
-    return end2end_dataset_path, abs_end2end_dataset_path
+            # Clear the buffer pool
+            table_list.append(table_name)
+            abs_pool_path = os.path.join(abs_end2end_table_dir, f"{table_name}_pool.npy")
+            if os.path.isfile(abs_pool_path):
+                os.remove(abs_pool_path)
+
+        init_pg(dataset, csv_dataset_dir, table_list)
+
+        return end2end_dataset_dir, abs_end2end_dataset_dir
+    else:
+        if "census" in dataset and model in ["naru", "transformer"]:
+            # For the census dataset and naru model, use census_int.npy
+            npy_tail = "_int.npy"
+
+        # Get the dataset path
+        if "_" in dataset:
+            dataset_name=dataset.split("_")[0]
+        else:
+            dataset_name=dataset
+        src_dataset_path = f"./data/{dataset_name}/{dataset}{npy_tail}"  # Original dataset path
+        end2end_dataset_path = f"./data/{dataset_name}/end2end/{dataset}{npy_tail}"  # End2end dataset path
+        abs_src_dataset_path = path_util.get_absolute_path(src_dataset_path)
+        abs_end2end_dataset_path = path_util.get_absolute_path(end2end_dataset_path)
+
+        # Copy the original dataset to the end2end folder, overwrite if it exists
+        shutil.copy2(src=abs_src_dataset_path, dst=abs_end2end_dataset_path)
+
+        # Clear the buffer pool
+        pool_path = f"./data/{dataset_name}/end2end/{dataset}_pool.npy"
+        if os.path.isfile(pool_path):
+            os.remove(pool_path)
+
+        return end2end_dataset_path, abs_end2end_dataset_path
 
 
 def get_workload_script_paths(model: str) -> Dict[str, Path]:
@@ -383,6 +447,7 @@ def run_workloads(
         workloads: List[BaseWorkload],
         model_update_workload: BaseWorkload,
         output_file_path: Path,
+        dataset: str,
 ) -> int:
     """
     Sequentially run all workloads,
@@ -413,13 +478,36 @@ def run_workloads(
         # If drift, execute model-update workload
         model_update_time = 0
         if isinstance(workload, DataUpdateWorkload):
-            is_drift = communicator.DriftCommunicator().get()  # Get drift detection result from communicator
-            if is_drift:
-                drift_count += 1
+            if dataset in ["stats"]:
+                drift_dict = communicator.DriftCommunicator().get_dict()
+
+                drift_flag = 0
+                drift_tables = []
+                for table_name in drift_dict:
+                    is_drift = drift_dict[table_name]
+                    if is_drift:
+                        drift_flag = 1
+                        drift_tables.append(table_name)
+                        update_dataset = f"{dataset}_{table_name}"
+                        model_update_start_time = time.time()
+                        model_update_workload.args["dataset"] = update_dataset # Run update on certain table
+                        model_update_workload.execute_workload()  # Run model update script
+                        model_update_time_single = time.time() - model_update_start_time
+                        model_update_time += model_update_time_single
+
+                drift_count += drift_flag
                 log_util.append_to_file(output_file_path, drift_message)  # Print drift detection info
-                model_update_start_time = time.time()
-                model_update_workload.execute_workload()  # Run model update script
-                model_update_time = time.time() - model_update_start_time
+                appendix_message = f"Drifted tables: {drift_tables}\n"
+                log_util.append_to_file(output_file_path, appendix_message) 
+                
+            else:
+                is_drift = communicator.DriftCommunicator().get()  # Get drift detection result from communicator
+                if is_drift:
+                    drift_count += 1
+                    log_util.append_to_file(output_file_path, drift_message)  # Print drift detection info
+                    model_update_start_time = time.time()
+                    model_update_workload.execute_workload()  # Run model update script
+                    model_update_time = time.time() - model_update_start_time
 
         # Record workload and model update times
         end_message = (
@@ -456,10 +544,10 @@ def main():
         f"{model}+"  # Model
         f"{dataset}+"  # Dataset
         f"{args.model_update}+"  # Model update method (adapt/update)
-        # f"{args.data_update}+"  # Data update method (single/permute/sample)
+        f"{args.data_update}+"  # Data update method (sample/tupleskew/valueskew)
         f"wl{args.num_workload}+"  # Number of workloads
-        # f"qseed{args.query_seed}+"  # Query seed
-        # f"sseed{sseed}+"  # Sample seed
+        f"qseed{args.query_seed}+"  # Query seed
+        f"sseed{sseed}+"  # Sample seed
         f"t{formatted_datetime}"  # Experiment time
         f".txt"
     )
@@ -526,6 +614,7 @@ def main():
         workloads=workloads_to_run,
         model_update_workload=workload_model_update,  # Model-update workload
         output_file_path=output_file_path,
+        dataset=dataset,
     )
 
     # ************************************** Experiment Summary **************************************

@@ -1,14 +1,24 @@
+import os
 import sys
 import math
+import time
+import copy
 from abc import ABC, abstractmethod
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 
 sys.path.append("./")
 from update_utils import path_util
 from update_utils.end2end_utils import communicator
 from update_utils.end2end_utils.json_communicator import JsonCommunicator
+
+
+def timestamp_transorform(time_string, start_date="2010-07-19 00:00:00"):
+    start_date_int = time.strptime(start_date, "%Y-%m-%d %H:%M:%S")
+    time_array = time.strptime(time_string, "%Y-%m-%d %H:%M:%S")
+    return int(time.mktime(time_array)) - int(time.mktime(start_date_int))
 
 
 class Sampler(ABC):
@@ -152,8 +162,8 @@ class ValueSkewSampler(Sampler):
         if not self.random_seed == "auto":
             np.random.seed(int(self.random_seed))
         # update_n_cols=np.random.randint(min_n_cols, max_n_cols)
-        # update_n_cols = 2
-        update_n_cols = max_n_cols
+        update_n_cols = 2
+        # update_n_cols = max_n_cols
         update_col_idx = np.random.choice(range(n_cols), size=update_n_cols, replace=False)
         # update_col_idx=[0,2]
 
@@ -266,6 +276,61 @@ class DataUpdater:
         communicator.SplitIndicesCommunicator().set(landmarks)  # Save landmarks to file
 
         return raw_data, sampled_data
+    
+
+    @staticmethod
+    def update_dataset_from_dir_to_dir(
+            table_name: str,
+            data_update_method: str,
+            raw_dataset_dir: Path,
+            update_fraction: float = None,
+            update_size: int = None,
+            random_seed=1234,
+    ):
+        """Read the current dataset from the original path, update it, and save the updated dataset to a new path."""
+        # Load the current dataset from the original path
+        raw_csv_path = os.path.join(raw_dataset_dir, f"{table_name}.csv")
+        raw_npy_path = os.path.join(raw_dataset_dir, f"{table_name}.npy") 
+        raw_csv_data = pd.read_csv(raw_csv_path)  # Original data
+        raw_npy_data = np.load(raw_npy_path, allow_pickle=True)
+
+        # Update the data
+        updater = DataUpdater(
+            data=raw_csv_data.to_numpy(),
+            sampler=create_sampler(
+                sampler_type=data_update_method,
+                update_fraction=update_fraction,
+                update_size=update_size,
+                random_seed=random_seed,
+            ),
+        )  # Create DataUpdater
+        updater.update_data()  # Perform data update
+        sampled_data = updater.get_sampled_data()  # New data added
+        delta_csv = pd.DataFrame(sampled_data, columns=raw_csv_data.columns)
+        updated_csv = pd.concat([raw_csv_data, delta_csv], ignore_index=True)
+        updated_csv.to_csv(raw_csv_path, index=False)
+        
+        convert_sampled_data = copy.deepcopy(sampled_data)
+        for idx, attr in enumerate(raw_csv_data.columns):
+            if "Date" in attr:
+                for i, date in enumerate(convert_sampled_data[:, idx]):
+                    convert_date = timestamp_transorform(date)
+                    convert_sampled_data[i][idx]=convert_date
+        
+        # convert_sampled_data[np.isnan(convert_sampled_data)] = 0
+        convert_sampled_data = convert_sampled_data.astype(np.float64)
+
+        # Save the updated data to the new path
+        updated_npy_data = np.vstack((raw_npy_data, convert_sampled_data))
+        np.save(raw_npy_path, updated_npy_data)
+
+        # Calculate and save landmarks
+        original_data_end = len(raw_npy_data)
+        updated_data_end = original_data_end + len(sampled_data)
+        landmarks = [original_data_end, updated_data_end]
+        communicator.SplitIndicesCommunicator().set(landmarks)  # Save landmarks to file
+
+        return raw_npy_data, convert_sampled_data, delta_csv
 
 
 if __name__ == "__main__":

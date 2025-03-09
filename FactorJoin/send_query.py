@@ -9,14 +9,13 @@ def send_query(dataset, method_name, query_file, save_folder, iteration=None, te
     conn = psycopg2.connect(database=dataset, user="kangping", password="kangping", host="localhost", port=5432)
     cursor = conn.cursor()
 
-
     with open(query_file, "r") as f:
         queries = f.readlines()
 
     # cursor.execute('SET debug_card_est=true;')
     # cursor.execute('SET print_sub_queries=true')
     # cursor.execute('SET print_single_tbl_queries=true')
-    if test_type=="factorjoin":
+    if test_type in ["factorjoin", "asm"]:
         cursor.execute("SET ml_joinest_enabled=true;")
         cursor.execute("SET join_est_no=0;")
         # print(f"Cardinality path: {method_name}")

@@ -1,4 +1,2 @@
-dataset-bjaq recommended threshold: 6.258487701416016e-06
-dataset-census recommended threshold: 2.7775305716204455e-05
-dataset-forest recommended threshold: 1.7292499160248552e-06
-dataset-power recommended threshold: 8.03232192993164e-06
+dataset-bjaq_gaussian recommended threshold: 1.8985986689585842e-05
+dataset-census_gaussian recommended threshold: 7.410617821733469e-05
