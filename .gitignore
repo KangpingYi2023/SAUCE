@@ -1,5 +1,6 @@
 .idea/*
 *.pyc
+*.txt
 Naru/checkpoints/
 FACE/checkpoints/
 FactorJoin/checkpoints/
@@ -21,6 +22,8 @@ end2end/model-evaluation/*
 end2end/parsed-records/*
 models/*
 take-over.md
+workloads/query_filter.py
+end2end/pg/
 !end2end/**/tmp
 !models/**origin_models
 !models/end2end
